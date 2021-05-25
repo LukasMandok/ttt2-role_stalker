@@ -1,3 +1,5 @@
+if not huds.GetStored("octagonal") then return end
+
 local base = "octagonal_target" -- "octagonal_element"
 
 DEFINE_BASECLASS(base)

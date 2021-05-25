@@ -47,14 +47,15 @@ end
     --     AddEquipmentToRole(ROLE_STALKER, self)
     -- end
 
-local plymeta = FindMetaTable("Player")
+--local plymeta = FindMetaTable("Player")
 
+--TODO: überarbeiten, sodass es besser funktioniert
 
 function ITEM:Bought(owner)
     if owner:GetSubRole() ~= ROLE_STALKER or not owner:Alive() or owner:IsSpec() then return end
 
-    hook.Add("KeyPress", "StalkerEnterStalker", function(ply, key)
-        if ply:HasEquipmentItem(self.id) and ply:GetSubRole() ~= ROLE_STALKER or not ply:Alive() or ply:IsSpec() then return end
+    hook.Add("KeyPress", "StalkerDashJump", function(ply, key)
+        if not ply:HasEquipmentItem(self.id) or ply:GetSubRole() ~= ROLE_STALKER or not ply:Alive() or ply:IsSpec() then return end
 
         if key == IN_JUMP and ply:KeyDown(IN_SPEED) then
             self:DashJump(ply)
@@ -62,7 +63,7 @@ function ITEM:Bought(owner)
     end)
 
     if SERVER then
-        ply:GiveEquipmentItem("item_ttt_climb")
+        owner:GiveEquipmentItem("item_ttt_climb")
     end
 end
 

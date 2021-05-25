@@ -59,7 +59,7 @@ if SERVER then
         if owner:GetSubRole() ~= ROLE_STALKER or not owner:Alive() or owner:IsSpec() then return end
 
         hook.Add("ttt_slk_claws_hit", "StalkerClawsLifesteal", function(ply, tgt, dmg, primary)
-            if ply:HasEquipmentItem(self.id) and ply:GetSubRole() ~= ROLE_STALKER or not ply:Alive() or ply:IsSpec() then return end
+            if not ply:HasEquipmentItem(self.id) or ply:GetSubRole() ~= ROLE_STALKER or not ply:Alive() or ply:IsSpec() then return end
 
             if tgt:IsPlayer() and primary then
                 self:HitPlayer(ply, tgt, dmg)

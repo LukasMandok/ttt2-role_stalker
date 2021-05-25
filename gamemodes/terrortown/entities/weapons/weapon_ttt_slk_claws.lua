@@ -16,7 +16,7 @@ if CLIENT then
     SWEP.DrawAmmo	   = false -- not needed?
 
     SWEP.DrawCrosshair = true
-    SWEP.ViewModelFlip = true
+    SWEP.ViewModelFlip = false
     SWEP.ViewModelFOV  = 74
 
     SWEP.Slot          = 1
@@ -27,9 +27,9 @@ end
 SWEP.Base                  = "weapon_tttbase"
 
 SWEP.ViewModel             = "models/zed/weapons/v_banshee.mdl"
-SWEP.WorldModel            = "models/zed/weapons/v_banshee.mdl"--"models/weapons/v_banshee.mdl" -- change this! w_pistol
-SWEP.HoldType              = "knife"
-SWEP.UseHands              = true
+SWEP.WorldModel            = ""--"models/weapons/v_banshee.mdl" -- change this! w_pistol
+SWEP.HoldType              = "normal"
+SWEP.UseHands              = false --true
 
 SWEP.Kind                  = WEAPON_PISTOL
 

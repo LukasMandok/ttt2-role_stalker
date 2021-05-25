@@ -109,6 +109,7 @@ if SERVER then
     end
 
     function plymeta:DeactivateStalkerStalker()
+        print("Deaktivate Stalker")
         self:SetNWBool("ttt2_hd_stalker_mode", false)
         self:SetNWInt("ttt2_stalker_mana", 0)
         self:UpdateCloaking()
@@ -117,6 +118,7 @@ if SERVER then
 
     function plymeta:SetStalkerMode_slk(bool)
         if bool then
+            print("Activate Stalker Mode")
             self:ActivateStalkerStalker()
             net.Start("ttt2_slk_epop")
             net.WriteString(self:Nick())
@@ -190,18 +192,6 @@ if SERVER then
         return (wep:GetClass() == "weapon_ttt_slk_claws" or wep:GetClass() == "weapon_ttt_slk_tele" or wep:GetClass() == "weapon_ttt_slk_scream")
     end)
 
-    hook.Add("TTTPlayerSpeedModifier", "StalkerSpeedBonus", function(ply, _, _, speedMod)
-        if ply:GetSubRole() ~= ROLE_STALKER or not ply:GetNWBool("ttt2_hd_stalker_mode") then return end
-        
-        -- if ply:HasEquipmentItem("item_ttt_slk_mobility") then
-        -- --if ply:GetNWBool("ttt2_stalker_mobility") then
-        --     speedMod[1] = speedMod[1] * 1.6
-        -- else
-        --     speedMod[1] = speedMod[1] * 1.3
-        -- end
-        speedMod[1] = speedMod[1] * 1.3
-    end)
-
      hook.Add("TTT2StaminaRegen", "StalkerStaminaMod", function(ply, stamMod)
         if not IsValid(ply) or not ply:Alive() or ply:IsSpec() then return end
         if ply:GetSubRole() ~= ROLE_STALKER or not ply:GetNWBool("ttt2_hd_stalker_mode") then return end
@@ -224,6 +214,12 @@ if SERVER then
     -- using hook("PlayerSPawn") of hidden
 
 end
+
+hook.Add("TTTPlayerSpeedModifier", "StalkerSpeedBonus", function(ply, _, _, speedMod)
+    if ply:GetSubRole() ~= ROLE_STALKER or not ply:GetNWBool("ttt2_hd_stalker_mode") then return end
+
+    speedMod[1] = speedMod[1] * 1.3
+end)
 
 if CLIENT then
     hook.Add("TTT2PreventAccessShop", "PreventShopOutsideStalkerMode", function()

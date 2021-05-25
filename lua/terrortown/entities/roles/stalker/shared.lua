@@ -80,26 +80,33 @@ end)
 if SERVER then
 
     function ROLE:RemoveRoleLoadout(ply, isRoleChange)
+        -- TODO: Effizientere Variante!
         ply:RemoveEquipmentWeapon("weapon_ttt_slk_claws")
+        ply:RemoveEquipmentWeapon("weapon_ttt_slk_scream")
         ply:RemoveEquipmentWeapon("weapon_ttt_slk_tele")
+        ply:RemoveEquipmentItem("item_ttt_slk_lifesteal")
+        ply:RemoveEquipmentItem("item_ttt_slk_mana_upgrade")
+        ply:RemoveEquipmentItem("item_ttt_slk_mobility")
         ply:RemoveEquipmentItem("item_ttt_climb")
+        print("Call SetStalkerMode false")
         ply:SetStalkerMode_slk(false)
         STATUS:RemoveStatus(ply, "ttt2_hdn_invisbility")
     end
 
     hook.Add("KeyPress", "StalkerEnterStalker", function(ply, key)
+        print("Pressing Key:", ply:GetSubRole())
         if ply:GetSubRole() ~= ROLE_STALKER or not ply:Alive() or ply:IsSpec() then return end
 
         if key == IN_RELOAD then
-            if ply:GetNWBool("ttt2_hd_stalker_mode", false) == false then
+            print("Pressed Reload key.")
+            if not ply:GetNWBool("ttt2_hd_stalker_mode", false) then
                 ply:SetStalkerMode_slk(true)
-                --STATUS:AddStatus(ply, "ttt2_hdn_invisbility")
-                --ply:GiveEquipmentWeapon("weapon_ttt_hd_knife")
+                STATUS:AddStatus(ply, "ttt2_hdn_invisbility")
                 ply:GiveEquipmentWeapon("weapon_ttt_slk_claws")
                 ply:GiveEquipmentWeapon("weapon_ttt_slk_tele")
                 ply:GiveEquipmentWeapon("weapon_ttt_slk_scream")
 
-            elseif ply:GetNWBool("ttt2_slk_regenerate_mode", false) == false then 
+            elseif ply:GetNWBool("ttt2_slk_regenerate_mode", false) == false then
                 ply:SetRegenerateMode(true)
             else
                 ply:SetRegenerateMode(false)
