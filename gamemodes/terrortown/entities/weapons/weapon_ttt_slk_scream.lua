@@ -162,13 +162,15 @@ function SWEP:Scream()
     owner:EmitSound( self.Primary.Scream, 100, 90 )
 
     --TODO: Create Blast effect
-    local ed = EffectData()
-    ed:SetOrigin(owner:EyePos())
-    ed:SetAngles(owner:EyeAngles())
-    util.Effect( "ManhackSparks", ed, true, true )
+    local blast = EffectData()
+    blast:SetOrigin(owner:EyePos())
+    blast:SetAngles(owner:EyeAngles())
+    util.Effect( "ManhackSparks", blast, true, true )
+
+    if not SERVER then return end
 
     for k,ply in pairs( util.GetAlivePlayers() ) do
-    	
+
         if ply == owner then continue end
 
         local vec = ply:GetPos() - owner:GetPos()
@@ -187,7 +189,9 @@ function SWEP:Scream()
 
             -- Screen Effect on the Hit players
             local ed = EffectData()
-            ed:SetOrigin( ply:GetPos() )
+            --ed:SetOrigin( ply:GetPos() )
+            ed:SetEntity( ply )
+            print("Apply effect to:", ply:Nick())
             util.Effect( "effect_ttt_slk_scream", ed, true, true )
         end
     end

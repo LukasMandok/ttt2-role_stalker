@@ -25,7 +25,7 @@ function ROLE:PreInitialize()
     self.score.teamKillsMultiplier = -16
     self.score.bodyFoundMuliplier = 0
 
-
+    self.traitorCreditAward = true
 
     self.fallbackTable = {} -- = {items.GetStored("weapon_ttt_slk_tele"),
                         --   --items.GetStored("weapon_ttt_slk_scream"),
@@ -40,9 +40,12 @@ function ROLE:PreInitialize()
         pct = 0.13,
         maximum = 1,
         minPlayers = 8,
-        credits = 3,
+        credits = 2,
         togglable = true,
         random = 20,
+        traitorKill = 1,
+        creditsTraitorKill = 1,
+        --creditsTraitorDead = 1,
         shopFallback = SHOP_UNSET -- SHOP_FALLBACK_STALKER -- SHOP_UNSET
     }
 
