@@ -83,7 +83,7 @@ if SERVER then
         if not self:CanRegen(ply) then return end
 
         local health = tgt:Health()
-        if  health < (dmg + 5) then
+        if  health <= dmg then
             ply:AddHealth(health * 0.2 + 20)
             self:SetNextRegen(ply)
         else

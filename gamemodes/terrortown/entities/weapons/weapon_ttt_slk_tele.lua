@@ -122,7 +122,7 @@ function SWEP:Think()
     owner:SetAmmo(ammo, self:GetPrimaryAmmoType())
 
     if owner:GetMana() < mana_cost then
-        --print("Not enough mana")
+        self:SetClip1(0)
     return end
 
     if self:GetNextSecondaryFire() > CurTime() then
@@ -133,7 +133,7 @@ function SWEP:Think()
     -- self:Reload()
 end
 
--- function SWEP:Reload()
+function SWEP:Reload() end
 --     print("Try Reloading")
 --     if self:GetOwner():GetAmmoCount( self:GetPrimaryAmmoType() ) < 1 then
 --         print("Not enough Ammo available:", self:GetOwner():GetAmmoCount(self:GetPrimaryAmmoType()))

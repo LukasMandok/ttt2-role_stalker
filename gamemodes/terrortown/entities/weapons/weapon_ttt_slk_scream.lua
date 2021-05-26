@@ -104,6 +104,7 @@ function SWEP:Think()
 
     if owner:GetMana() < self.Mana then
         --print("Not enough mana", owner:GetMana(), self.Mana)
+        self:SetClip1(0)
         owner:SetAmmo(0, self:GetPrimaryAmmoType())
     return end
 
@@ -124,12 +125,14 @@ end
 function SWEP:CanPrimaryAttack()
     if self:Clip1() < 1 then
         self:GetOwner():EmitSound( self.Primary.Miss, 40, 250 )
-        self:SetNextSecondaryFire(CurTime() + self.Primary.Delay)
+        self:SetNextPrimaryFire(CurTime() + 1 ) --self.Primary.Delay
         return false
     end
 
     return true
 end
+
+function SWEP:Reload() end
 
 function SWEP:PrimaryAttack()
 
