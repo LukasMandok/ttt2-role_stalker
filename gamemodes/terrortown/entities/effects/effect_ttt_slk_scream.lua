@@ -6,12 +6,12 @@ local ColorMod = {}
     ColorMod[ "$pp_colour_addr" ] = 0.05
     ColorMod[ "$pp_colour_addg" ] = 0
     ColorMod[ "$pp_colour_addb" ] = 0
-    ColorMod[ "$pp_colour_mulr" ] = 1  
-    ColorMod[ "$pp_colour_mulg" ] = 1 
-    ColorMod[ "$pp_colour_mulb" ] = 1 
+    ColorMod[ "$pp_colour_mulr" ] = 1
+    ColorMod[ "$pp_colour_mulg" ] = 1
+    ColorMod[ "$pp_colour_mulb" ] = 1
 
 function EFFECT:Init(data)
-    --self.Pos = data:GetOrigin()
+    self:SetPos(LocalPlayer():GetPos()) --data:GetOrigin())
 
     -- if not LocalPlayer():Alive() or LocalPlayer():GetPos():Distance( self.Pos ) > 50 or LocalPlayer():IsSpec() or LocalPlayer():Team() == TEAM_STALKER then 
     --     print("does not affect", LocalPlayer():Nick())
@@ -26,12 +26,14 @@ function EFFECT:Init(data)
 
     print("Start Effect")
 
+
     self.StartTime = CurTime()
 end
 
 function EFFECT:Think( )
-    print("Think:", self.StartTime + self.Duration > CurTime())
-    return self.StartTime and self.StartTime + self.Duration > CurTime()
+    self:SetPos(LocalPlayer():GetPos())
+    print("Think:", self.StartTime and self.StartTime + self.Duration > CurTime() or false)
+    return self.StartTime and self.StartTime + self.Duration > CurTime() or false
 end
 
 function EFFECT:Render()
