@@ -70,6 +70,7 @@ SWEP.DeploySpeed = 2
 
 -- Mana Managment
 SWEP.Mana = 50
+SWEP.Duration = 5
 
 --AddWeaponIntoFallbackTable(SWEP:GetClass(), STALKER)
 
@@ -186,6 +187,7 @@ function SWEP:Scream()
 
         if not ply:IsSpec() and  (vec:LengthSqr() <  self.MaxDistance^2) and (math.abs(angle.p) < self.HitAngle.p) and (math.abs(angle.y) < self.HitAngle.y) and ply:Team() ~= TEAM_STALKER then
             util.BlastDamage( owner, owner, ply:GetPos(), 5, self.Primary.Damage )
+            ply:SetNWBool("ttt2_slk_scream_stun", true)
 
             -- Screen Effect on the Hit players
             local ed = EffectData()
@@ -195,6 +197,14 @@ function SWEP:Scream()
             util.Effect( "effect_ttt_slk_scream", ed, true, true )
         end
     end
+
+    timer.Simple(self.Duration, function()
+        print("Deactivate Scream Stun")
+        for _,ply in pairs(player.GetAll()) do
+            if not IsValid(ply) or not ply:IsPlayer() then continue end
+            ply:SetNWBool("ttt2_slk_scream_stun", false)
+        end
+    end)
 
     -- local tbl = ents.FindByClass( "sent_tripmine" )
     -- tbl = table.Add( tbl, ents.FindByClass( "sent_seeker" ) )
@@ -207,3 +217,10 @@ function SWEP:Scream()
 
     return true
 end
+
+hook.Add("TTTPlayerSpeedModifier", "StalkerScreamTargetSlow", function(ply, _, _, speedMod)
+    if not ply:GetNWBool("ttt2_slk_scream_stun") then return end
+
+    speedMod[1] = speedMod[1] * 0.6
+end)
+    

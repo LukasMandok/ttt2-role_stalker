@@ -1,5 +1,5 @@
 -- maybe make a convar for that
-EFFECT.Duration = 4
+EFFECT.Duration = 5
 
 local ColorMod = {}
     ColorMod = {}
@@ -24,16 +24,15 @@ function EFFECT:Init(data)
         return
     end
 
-    print("Start Effect")
-
-
     self.StartTime = CurTime()
 end
 
 function EFFECT:Think( )
     self:SetPos(LocalPlayer():GetPos())
     print("Think:", self.StartTime and self.StartTime + self.Duration > CurTime() or false)
+
     return self.StartTime and self.StartTime + self.Duration > CurTime() or false
+    --LocalPlayer():GetNWBool("ttt2_slk_scream_stun")
 end
 
 function EFFECT:Render()
