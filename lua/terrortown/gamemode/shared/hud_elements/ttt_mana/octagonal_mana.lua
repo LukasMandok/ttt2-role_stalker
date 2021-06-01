@@ -82,6 +82,7 @@ if CLIENT then
 		local w, h = size.w, size.h
 
 		local mana = client:GetMana()
+		local mana_cost = client:GetManaCost()
 		local multiplier = mana / client:GetMaxMana()
 
 		-- draw bg and shadow
@@ -89,8 +90,14 @@ if CLIENT then
 		self:DrawBg(x, y, self.pad, h, self.extraBarColor)
 		self:DrawBg(x, y, self.pad, h, self.darkOverlayColor)
 
-		--           x,            y, width,        height, color,         progress,                                    scale,      text,                                textpadding
-		self:DrawBar(x + self.pad, y, w - self.pad, h, self.extraBarColor, (HUDEditor.IsEditing and 1) or (multiplier), self.scale, LANG.GetTranslation("slk_mana_name") .. ": " .. tostring(mana))
+	
+		--           x,            y, width,        height, color,         progress,                                    scale,      text,                                
+		self:DrawBar(x + self.pad, y, w - self.pad, h, self.extraBarColor, (HUDEditor.IsEditing and 1) or (multiplier), self.scale,  LANG.GetTranslation("slk_mana_name") .. ": " .. tostring(mana))
+
+		
+		if mana_cost then
+			draw.AdvancedText("-" .. tostring(mana_cost), "OctagonalBar", x + w - 2 * self.pad, y + h / 2, util.GetDefaultColor(Color(234, 41, 41)), TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER, false, self.scale)
+		end
 	end
 end
 

@@ -59,6 +59,14 @@ function plymeta:GetMaxMana()
     return self:GetNWInt("ttt2_stalker_mana_max")
 end
 
+function plymeta:GetManaCost()
+    return self.ManaCost
+end
+
+function plymeta:SetManaCost(mana_cost)
+    self.ManaCost = mana_cost and math.Round(mana_cost) or nil
+end
+
 if SERVER then
 
     -- using plymeta:SetCloakMode

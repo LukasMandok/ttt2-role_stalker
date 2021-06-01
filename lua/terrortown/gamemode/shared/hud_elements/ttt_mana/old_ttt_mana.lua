@@ -46,7 +46,7 @@ if CLIENT then -- CLIENT
 		return const_defaults
 	end
 
-	function HUDELEMENT:DrawComponent(name, col, val, multiplier)
+	function HUDELEMENT:DrawComponent(name, col, val, multiplier, val2)
 		multiplier = multiplier or 1
 
 		local pos = self:GetPos()
@@ -67,6 +67,10 @@ if CLIENT then -- CLIENT
 		if val then
 			self:ShadowedText(val, "HealthAmmo", tx + bar_width * 0.95, ty + bar_height * 0.5, COLOR_WHITE, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
 		end
+
+		if val2 then
+			self:ShadowedText("-" .. tostring(val2), "HealthAmmo", tx + bar_width * 0.5, ty + bar_height * 0.5, COLOR_WHITE, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+		end 
 
 		draw.SimpleText(name, "TabLarge", x + self.margin * 2, y, COLOR_WHITE, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 	end
@@ -90,14 +94,15 @@ if CLIENT then -- CLIENT
 
 		if not IsValid(client) then return end
 
-		local multiplier, mana
+		local multiplier, mana, mana_cost
 
-		local color = STALKER.color
+		local color = STALKER.color --self.sprint_colors 
 		if not color then return end
 
 		if client:IsActive() and client:Alive() and client:GetSubRole() == ROLE_STALKER and client:GetNWBool("ttt2_hd_stalker_mode", false) then
 			mana = client:GetMana()
 			multiplier = mana / client:GetMaxMana()
+			mana_cost = client:GetManaCost()
 
 			-- if not client:GetNWInt("Mana", 0) > 0 then
 			-- 	local bloodlustTime = client:GetNWInt("Bloodlust", 0)
@@ -126,7 +131,7 @@ if CLIENT then -- CLIENT
 				fill = color
 			}
 
-			self:DrawComponent(LANG.GetTranslation("slk_mana_name"), col_tbl, tostring(mana), multiplier)
+			self:DrawComponent(LANG.GetTranslation("slk_mana_name"), col_tbl, tostring(mana), multiplier, mana_cost)
 		end
 	end
 end

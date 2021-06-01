@@ -90,10 +90,18 @@ function SWEP:Initialize()
     self:SetWeaponHoldType(self.HoldType)
 end
 
+function SWEP:Deploy()
+    if SERVER then return true end
+    LocalPlayer():SetManaCost(self.Mana)
+    return true
+end
 
--- function SWEP:Holster()
---     return false
--- end
+function SWEP:Holster()
+    if SERVER then return true end
+    LocalPlayer():SetManaCost(nil)
+    return true
+end
+
 function SWEP:Equip(owner)
     if not SERVER or not owner then return end
     owner:DrawWorldModel(false)

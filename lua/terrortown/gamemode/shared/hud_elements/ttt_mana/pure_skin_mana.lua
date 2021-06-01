@@ -58,7 +58,7 @@ if CLIENT then -- CLIENT
 		BaseClass.PerformLayout(self)
 	end
 
-	function HUDELEMENT:DrawComponent(multiplier, col, text)
+	function HUDELEMENT:DrawComponent(multiplier, col, text, val)
 		multiplier = multiplier or 1
 
 		local pos = self:GetPos()
@@ -69,7 +69,11 @@ if CLIENT then -- CLIENT
 		self:DrawBg(x, y, w, h, self.basecolor)
 
 		-- draw bar
-		self:DrawBar(x + pad, y + pad, w - pad * 2, h - pad * 2, col, multiplier, scale, text)
+		self:DrawBar(x + pad, y + pad, w - pad * 2, h - pad * 2, col, multiplier, self.scale, text)
+
+		if val then
+			draw.AdvancedText("-" .. tostring(val), "PureSkinBar", x + w - 3 * pad, y + h / 2, util.GetDefaultColor(Color(234, 41, 41)), TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER, false, self.scale)
+		end
 
 		self:DrawLines(x, y, w, h, self.basecolor.a)
 	end
@@ -83,15 +87,16 @@ if CLIENT then -- CLIENT
 
 	function HUDELEMENT:Draw()
 		local client = LocalPlayer()
-		local multiplier, mana
+		local multiplier, mana, mana_cost
 
-		local color = STALKER.color
+		local color = Color(36, 154, 198) -- STALKER.color
 		if not color then return end
 
-		--if client:IsActive() and client:Alive() and client:GetSubRole() == ROLE_STALKER then
-		mana = client:GetMana()
-		multiplier = mana / client:GetMaxMana()
-		--end
+		if client:IsActive() and client:Alive() and client:GetSubRole() == ROLE_STALKER then
+			mana = client:GetMana()
+			mana_cost = client:GetManaCost()
+			multiplier = mana / client:GetMaxMana()
+		end
 
 		-- if client:IsActive() and client:Alive() and client:GetSubRole() == ROLE_STALKER then
 		-- 	if not client:GetNWBool("InBloodlust", false) then
@@ -115,7 +120,7 @@ if CLIENT then -- CLIENT
 		if HUDEditor.IsEditing then
 			self:DrawComponent(1, color)
 		elseif mana then
-			self:DrawComponent(multiplier, color, LANG.GetTranslation("slk_mana_name") .. ": " .. tostring(mana))
+			self:DrawComponent(multiplier, color, LANG.GetTranslation("slk_mana_name") .. ": " .. tostring(mana), mana_cost)
 		end
 	end
 end

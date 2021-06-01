@@ -32,6 +32,14 @@ if SERVER then
 
         if IsValid(par) then
             if par:GetClass() == "prop_ragdoll" then
+                -- print("prop:", self.Prop)
+                -- print("prop phys object:", self.Prop:GetPhysicsObject())
+                -- print("Prop Mass:", self.Prop:GetPhysicsObject():GetMass())
+                -- print("self:", self)
+                -- print("self Physics Object:", self:GetPhysicsObject())
+                -- print("Mass of self PO:", self:GetPhysicsObject():GetMass())
+                -- print("Par Physics Object:", par:GetPhysicsObject())
+                -- print("Mass of Physics Object:", ( par:GetPhysicsObject() and par:GetPhysicsObject():GetMass()))
                 self.Bloody = true
                 par.Cons = {}
                 table.insert(par.Cons, constraint.Weld(par, self, 0, 0, 0, true, false))
@@ -51,7 +59,7 @@ if SERVER then
                 local phys = par:GetPhysicsObject()
 
                 if IsValid(phys) then
-                    phys:SetMass(math.Clamp(phys:GetMass(), 100, 5000))
+                    phys:SetMass(math.Clamp(phys:GetMass(), 10, 200))
                     phys:EnableMotion(true)
                     phys:EnableGravity(false)
                     phys:Wake()
@@ -140,6 +148,7 @@ if SERVER then
     end
 
     function ENT:OnRemove()
+        self:GetOwner():SetNWBool("ttt2_slk_tele_active", false)
         local par = self:GetTrueParent()
 
         if IsValid(par) then
@@ -152,6 +161,7 @@ if SERVER then
             end
 
             par.Tele = nil
+            self.Prop = nil
             local phys = par:GetPhysicsObject()
 
             if IsValid(phys) then

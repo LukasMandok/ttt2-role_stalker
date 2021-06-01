@@ -1,4 +1,4 @@
--- maybe make a convar for that
+-- TODO: maybe make a convar for that
 EFFECT.Duration = 5
 
 local ColorMod = {}

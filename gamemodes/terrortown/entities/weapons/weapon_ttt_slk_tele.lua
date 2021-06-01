@@ -12,6 +12,9 @@ if SERVER then
 
     resource.AddFile("materials/vgiu/ttt/icon_slk_tele")
     resource.AddFile("materials/vgui/ttt/hud_icon_slk_tele") --.png
+
+    util.AddNetworkString("SendMassList")
+    util.AddNetworkString("RequestMassList")
 end
 
 if CLIENT then
@@ -61,7 +64,8 @@ SWEP.Primary.DefaultClip    = 1 -- 1
 SWEP.Primary.Ammo           = "stalker_tele" -- do i need this?
 SWEP.Primary.Tele           = Sound("npc/turret_floor/active.wav")
 SWEP.Primary.Miss           = Sound("ambient/atmosphere/cave_hit2.wav")
-SWEP.Primary.Mana           = 50
+SWEP.Primary.ManaMin        = 10
+SWEP.Primary.ManaMax        = 75
 
 -- SECONDARY: Start Tele 
 SWEP.Secondary.Delay        = 10
@@ -79,14 +83,52 @@ SWEP.IsSilent           = true
 
 -- Pull out faster than standard guns
 SWEP.DeploySpeed        = 2
+SWEP.RenderGroup = RENDERGROUP_OPAQUE
 
---AddWeaponIntoFallbackTable(SWEP:GetClass(), STALKER)
+local plymeta = FindMetaTable("Player")
 
+local function drawOutline()
+    local ply = LocalPlayer()
 
--- hook.Add("PostInitPostEntity", "Intiaialize_weapon_ttt_slk_tele", function()
---     AddToShopFallback(STALKER.fallbackTable, ROLE_STALKER, SWEP)
---     --AddWeaponIntoFallbackTable(SWEP.id, STALKER)
--- end)
+    if not IsValid(ply) or not ply:Alive() or ply:IsSpec() then return end
+    if ply:GetSubRole() ~= ROLE_STALKER or not ply:GetNWBool("ttt2_hd_stalker_mode", false) then return end
+
+    local wep = ply:GetActiveWeapon()
+
+    if wep:GetClass() ~= "weapon_ttt_slk_tele" or ply:GetNWBool("ttt2_slk_tele_active") then
+        print("Tele is aktive:")
+    return end
+
+    if IsValid(ply.HighlightObject) then
+        local clr
+        if ply:GetMana() < ply:GetManaCost() then
+            clr = Color(255, 0, 0)
+        else
+            clr = Color(0, 255, 0)
+        end
+
+        outline.Add(ply.HighlightObject, clr, OUTLINE_MODE_VISIBLE)
+        --halo.Add({ ply.HighlightObject }, clr, 0, 0, 3, true, true)
+    end
+end
+
+local function setNewHighlightObject(cmd)
+    local ply = LocalPlayer()
+
+    if not IsValid(ply) or not ply:Alive() or ply:IsSpec() then return end
+    if ply:GetSubRole() ~= ROLE_STALKER then return end
+    if ply:GetActiveWeapon():GetClass() ~= "weapon_ttt_slk_tele" or ply:GetNWBool("ttt2_slk_tele_active") then return end
+    
+    if cmd:GetForwardMove() ~= 0 or cmd:GetSideMove() ~= 0 or cmd:GetMouseX() ~= 0 or cmd:GetMouseY() ~= 0 then
+        ply.FindNewHighlightObject = true
+    else
+        ply.FindNewHighlightObject = false
+    end
+end
+
+------------------------------------------------
+------- Initialize Weapon and Add Hooks -------- 
+------------------------------------------------
 
 function SWEP:ShopInit()
     AddToShopFallback(STALKER.fallbackTable, ROLE_STALKER, self)
@@ -95,56 +137,122 @@ end
 
 function SWEP:Initialize()
     self:SetWeaponHoldType(self.HoldType)
+
+    if CLIENT then
+        net.Start("RequestMassList")
+        net.SendToServer()
+
+        net.ReceiveStream("SendMassList", function(masses)
+            for ent_index, mass in pairs(masses) do
+                print(ent_index, mass)
+
+                local ent = ents.GetByIndex(ent_index)
+
+                if IsValid(ent) then
+                    print("Mass of ent:", ent:GetClass(), ent.Mass, mass)
+                    ent.Mass = mass
+                end
+            end
+        end)
+
+        print("Adding PreDrawHalos Hook.")
+        -- Draw Halo of HighlightObject
+        -- hook.Add("PreDrawHalos", "HighlightTeleObjects", drawOutline)
+
+        -- -- Clear Highlight Object, so the Player needs to look for it again
+        -- hook.Add("CreateMove", "RemoveHighlightObject", setNewHighlightObject)
+    
+    -- if SERVER
+    else
+        net.Receive("RequestMassList", function(len, ply)
+            local masses = {}
+            for k, ent in pairs(ents.FindByClass("prop_phys*")) do
+                local phys = ent:GetPhysicsObject()
+                if IsValid(phys) then
+                    ent.Mass = phys:GetMass()
+                    masses[ent:EntIndex()] = phys:GetMass()
+                end
+            end
+
+            net.SendStream("SendMassList", masses, ply)
+        end)
+    end
 end
 
--- function SWEP:Holster()
---     return false
--- end
+function SWEP:Deploy()
+    if SERVER then return true end
+    hook.Add("PreDrawHalos", "HighlightTeleObjects", drawOutline)
+    -- Clear Highlight Object, so the Player needs to look for it again
+    hook.Add("CreateMove", "RemoveHighlightObject", setNewHighlightObject)
+    return true
+end
+
+function SWEP:Holster()
+    if SERVER then return true end
+    hook.Remove("PreDrawHalos", "HighlightTeleObjects")
+    -- Clear Highlight Object, so the Player needs to look for it again
+    hook.Remove("CreateMove", "RemoveHighlightObject")
+    return true
+end
+
 function SWEP:Equip(owner)
     if not SERVER or not owner then return end
     owner:DrawWorldModel(false)
-    --self.ViewModel = "models/weapons/v_banshee.mdl"
-    --self.WorldModel = ""
-    -- net.Start("ttt2_hdn_network_wep")
-    --     net.WriteEntity(self)
-    --     net.WriteString("")
-    -- net.Broadcast()
-    -- STATUS:RemoveStatus(owner, "ttt2_hdn_knife_recharge")
 end
+
+------------------------------------------------
+-------------------- Think --------------------- 
+------------------------------------------------
 
 function SWEP:Think()
     local owner = self:GetOwner()
     if not IsValid(owner) or owner:GetSubRole() ~= ROLE_STALKER or not owner:GetNWBool("ttt2_hd_stalker_mode", false) then return end
 
-    local mana_cost = self.Primary.Mana + self.Secondary.Mana
+    if not owner:GetNWBool("ttt2_slk_tele_active") then
 
-    local ammo = math.Clamp(math.floor(self:GetOwner():GetMana() / mana_cost) - self:Clip1(), 0, 10)
-    owner:SetAmmo(ammo, self:GetPrimaryAmmoType())
+        -- On Client Side, if 
+        if CLIENT and owner.FindNewHighlightObject then
+            local spos  = owner:GetShootPos()
+            local sdest = spos + (owner:GetAimVector() * self.MaxDistance)
 
-    if owner:GetMana() < mana_cost then
+            owner.HighlightObject = owner:FindTeleObject(spos, sdest)
+
+            if IsValid(owner.HighlightObject) then
+                print("Add highlight for:", owner.HighlightObject:GetClass(), "with Mass:", owner.HighlightObject.Mass)
+                owner:SetManaCost(self:CalculateManaCost(owner.HighlightObject))
+            else
+                owner:SetManaCost(nil)
+            end
+
+        end
+
+        -- Calculating Ammuntion
+        local mana_cost = CLIENT and owner:GetManaCost() or self.Secondary.Mana + self.Primary.ManaMin
+
+        local ammo = math.Clamp(math.floor(owner:GetMana() / mana_cost) - self:Clip1(), 0, 10)
+        owner:SetAmmo(ammo, self:GetPrimaryAmmoType())
+
+        if owner:GetMana() < mana_cost then
+            self:SetClip1(0)
+        return end
+
+        if self:GetNextSecondaryFire() > CurTime() then
+            --print("NextSecondaryFire not valid:", self:GetNextSecondaryFire())
+        return end
+
+        self:SetClip1(1)
+
+    else 
         self:SetClip1(0)
-    return end
-
-    if self:GetNextSecondaryFire() > CurTime() then
-        --print("NextSecondaryFire not valid:", self:GetNextSecondaryFire())
-    return end
-
-    self:SetClip1(1)
-    -- self:Reload()
+        if CLIENT and owner.HighlightObject then
+            owner:SetManaCost(self:CalculateManaCost(owner.HighlightObject, true))
+            owner.HighlightObject = nil
+        end
+    end
 end
 
 function SWEP:Reload() end
---     print("Try Reloading")
---     if self:GetOwner():GetAmmoCount( self:GetPrimaryAmmoType() ) < 1 then
---         print("Not enough Ammo available:", self:GetOwner():GetAmmoCount(self:GetPrimaryAmmoType()))
---     return end
---     if self.Clip1() == self.Primary.ClipSize then
---         print("Clip already full!:", self.Clip1())
---     return end
 
---     print("Set Clip1 to:", self.Primary.ClipSize)
---     self:SetClip1(self.Primary.ClipSize)
--- end
 
 function SWEP:CanSecondaryAttack()
     -- if self:GetOwner():GetMana() < (self.Primary.Mana + self.Secondary.Mana) then
@@ -168,64 +276,80 @@ end
 
 -- end
 function SWEP:PrimaryAttack()
-    -- TODO: Only set this, if the attack hit something.    
-
-    --self.ViewModel = "models/weapons/v_banshee.mdl"
     local owner = self:GetOwner()
     if not IsValid(owner) or owner:GetSubRole() ~= ROLE_STALKER or not owner:GetNWBool("ttt2_hd_stalker_mode", false) then return end
-    --owner:LagCompensation(true)
 
     self:SetNextPrimaryFire(CurTime() + self.Primary.Delay)
 
     if self:ShotTele() then
         self:SetNextSecondaryFire(CurTime() + self.Secondary.Delay)
-    
+
         if SERVER then
-            owner:AddMana(-self.Primary.Mana)
+            owner:SetNWBool("ttt2_slk_tele_active", false)
+            owner:AddMana(-owner:GetManaCost())
         end
     end
 
     return true
-    --owner:LagCompensation(false)
 end
 
 function SWEP:SecondaryAttack()
     local owner = self:GetOwner()
     if not IsValid(owner) or owner:GetSubRole() ~= ROLE_STALKER or not owner:GetNWBool("ttt2_hd_stalker_mode", false) then return end
-
     if not self:CanSecondaryAttack() then return end
 
     self:SetNextSecondaryFire(CurTime() + self.Secondary.Delay)
-    --self.ViewModel = "models/zed/weapons/v_banshee.mdl"
 
-    --owner:LagCompensation(true)
     -- local tgt, spos, sdest, trace = self:MeleeTrace()
     -- print("target:", tgt, "pos:", spos, "destination:", sdest, "trace:", trace)
     -- if IsValid(tgt) then
-    if self:Tele() then
+    if self:StartTele() then
         self:SetClip1(0)
         --owner:SetAmmo(owner:GetAmmoCount(self:GetPrimaryAmmoType()) - 1, self:GetPrimaryAmmoType())
         if SERVER then
+            owner:SetNWBool("ttt2_slk_tele_active", true)
             owner:AddMana(-self.Secondary.Mana)
+
         end
     end
     --owner:LagCompensation(false)
 end
 
+-- Checks wether telekinesis can be used on an object
+function plymeta:CanTele(ent, phys)
+    -- TODO: Test for Mana
+    -- return canTele, enoughMana
+
+    if (string.find(ent:GetClass(), "prop_phys") or ent:GetClass() == "prop_ragdoll") and not IsValid(ent:GetParent()) then
+        if SERVER then
+            if IsValid(phys) and phys:IsMotionEnabled() and phys:IsMoveable() then
+                print("!!! Class of Object: " .. ent:GetClass() .. ",  with mass: " .. tostring(phys:GetMass()))
+                return true
+            end
+        else
+            return true
+        end
+    end
+
+    print("Cannot Tele: FALSE")
+end
+
 -- Turnes Prop into controlled prop
-function SWEP:TeleProp(ent)
+function SWEP:CreateTeleProp(ent)
     local owner = self:GetOwner()
-    --print("Turn Prop into TeleProp")
+    --print("Turn Prop into CreateTeleProp")
     ent.Tele = true
     local psy = ents.Create("ttt_tele_object")
     psy:SetOwner(owner)
     psy:SetAngles(ent:GetAngles())
+    psy:SetProp(ent)
 
     if ent:GetClass() == "prop_ragdoll" then
         psy:SetCollides(true)
         psy:SetTrueParent(ent)
         psy:SetPos(ent:LocalToWorld(ent:OBBCenter()))
         psy:SetModel("models/props_junk/propanecanister001a.mdl")
+        -- Hard coding Mass of Object
     else
         psy:SetParent(ent)
         psy:SetModel(ent:GetModel())
@@ -235,8 +359,16 @@ function SWEP:TeleProp(ent)
     local phys = ent:GetPhysicsObject()
 
     if IsValid(phys) then
-        psy:SetMass(math.Clamp(phys:GetMass(), 100, 5000))
+        print("Set Mass for Object", ent, "mass:", math.Clamp(phys:GetMass(), 10, 200))
+        if ent:GetClass() ~= "prop_ragdoll" then
+            psy:SetMass(math.Clamp(phys:GetMass(), 10, 200))
+        else
+            psy:SetMass(85)
+        end
         psy:SetPhysMat(phys:GetMaterial())
+    else
+        print("!!!! no physics Object available", ent:GetClass())
+        psy:SetMass()
     end
 
     psy:Spawn()
@@ -244,18 +376,6 @@ function SWEP:TeleProp(ent)
     owner:EmitSound(self.Primary.Tele, 50)
     -- net.Start("Flay")
     -- net.Send(owner)
-end
-
--- Checks wether telekinesis can be used on an object
-function SWEP:CanTele(ent, phys)
-    if (string.find(ent:GetClass(), "prop_phys") or ent:GetClass() == "prop_ragdoll") and not IsValid(ent:GetParent()) then
-        if IsValid(phys) and phys:IsMotionEnabled() and phys:IsMoveable() then
-            print("Can Tele: TRUE!")
-            return true
-        end
-    end
-
-    print("Cannot Tele: FALSE")
 end
 
 -- Lanches Object, if one is controlled with telekinesis
@@ -276,61 +396,156 @@ function SWEP:ShotTele()
 end
 
 -- Starks Telekinesis process of an object
-function SWEP:Tele()
+function SWEP:StartTele()
     local owner = self:GetOwner()
     -- create Trace in the direction the player is looking in. 
     -- restrict distance to self.MaxDistance
     local spos = owner:GetShootPos()
     local sdest = spos + (owner:GetAimVector() * self.MaxDistance)
 
+    local ent = owner:FindTeleObject(spos, sdest)
+
+    if IsValid(ent) and owner:GetMana() >= self:CalculateManaCost(ent) then
+        if SERVER then
+            self:CreateTeleProp(ent)
+            print("Mana Cost:", self:CalculateManaCost(ent, true), "of Entity:", ent)
+            owner:SetManaCost(self:CalculateManaCost(ent, true))
+        end
+
+        return true
+    end
+
+    owner:EmitSound(self.Primary.Miss, 50, 250)
+    return false
+end
+
+
+
+function plymeta:FindTeleObject(spos, sdest, doDrawing)
     local tr = util.TraceLine({
         start = spos,
         endpos = sdest,
-        filter = owner,
-        mask = MASK_SHOT_HULL
+        filter = self,
+        mask = MASK_SHOT_HULL,
     })
 
-    -- TODO: Implement Mana System
-    -- if not enough mana, return
-    -- if owner:GetMana() < self.Mana then
-    --     return
-    -- end
-
-    local phys
     if IsValid(tr.Entity) then
-        phys = tr.Entity:GetPhysicsObject()
-    end
-
-    -- if object meets the Telekinesis requirements: TODO: add distance
-    if IsValid(tr.Entity) and IsValid(phys) and self:CanTele(tr.Entity, phys) then
-        print("Trace has hit object", tr.Entity)
-        self:TeleProp(tr.Entity)
-
-        return true
-        -- searches around the hit position for the closest other object
-    else
-        local dist = 100
-        local ent
-        local tbl = ents.FindByClass("prop_phys*")
-        tbl = table.Add(tbl, ents.FindByClass("prop_ragdoll"))
-
-        for k, v in pairs(tbl) do
-            local phys = v:GetPhysicsObject()
-
-            -- HitPos is EndPos if trace hit nothing
-            if v:GetPos():Distance(tr.HitPos) < dist and not IsValid(v:GetParent()) and self:CanTele(v, phys) then
-                ent = v
-                dist = v:GetPos():Distance(tr.HitPos)
+        if SERVER then
+            local phys = tr.Entity:GetPhysicsObject()
+            if IsValid(phys) and self:CanTele(tr.Entity, phys) then
+                print("Found Object Line Trace")
+                return tr.Entity
+            end
+        else
+            if self:CanTele(tr.Entity) then
+                print("Found Object Line Trace")
+                return tr.Entity
             end
         end
-
-        if IsValid(ent) then
-            self:TeleProp(ent)
-
-            return true
-        end
-
-        owner:EmitSound(self.Primary.Miss, 50, 250)
-        return false
     end
+
+    -- local dist = 50
+
+    -- using Hull Trace
+
+    -- local tr = util.TraceHull( {
+    --     start = spos,
+    --     endpos = sdest,
+    --     filter = self,
+    --     mask = MASK_SHOT_HULL,
+    --     maxs =  Vector(dist, dist, dist),
+    --     mins = -Vector(dist, dist, dist),
+    -- } )
+
+
+    -- if doDrawing then
+    --     local clr = color_white
+    --     if ( tr.Hit ) then
+    --         clr = Color( 255, 0, 0 )
+    --     end
+
+    --     render.DrawLine( tr.HitPos, sdest, color_white, true )
+    --     render.DrawLine( spos, tr.HitPos, Color( 0, 0, 255 ), true )
+
+    --     render.DrawWireframeBox( tr.HitPos, Angle( 0, 0, 0 ), -Vector(dist, dist, dist), Vector(dist, dist, dist), clr, true )
+    -- end
+
+    -- if ( tr.Hit ) then
+    --     print("HullTrace hit:", tr.Entity)
+    --     return ent
+    -- end
+
+    print("Try Surounding")
+
+    -- using FindByClass
+
+    -- local dist = 50
+    -- local sel_ent
+    -- local tbl = ents.FindByClass("prop_phys*")
+    -- tbl = table.Add(tbl, ents.FindByClass("prop_ragdoll"))
+
+    -- for k, ent in pairs(tbl) do
+    --     print("test:", ent:GetClass())
+    --     local phys = ent:GetPhysicsObject()
+
+    --     -- HitPos is EndPos if trace hit nothing
+    --     print("distance:", ent:GetPos():Distance(tr.HitPos))
+    --     if ent:GetPos():DistToSqr(tr.HitPos) < dist^2 and not IsValid(ent:GetParent()) and self:CanTele(ent, phys) then
+    --         sel_ent = ent
+    --         print("found entity:", sel_ent:GetClass())
+    --         dist = ent:GetPos():Distance(tr.HitPos)
+    --     end
+    -- end
+
+    -- FindInSphere
+    local dist = 50
+    local sel_ent
+    tbl = ents.FindInSphere(tr.HitPos, dist)
+
+    for k, ent in pairs(tbl) do
+        print("test:", ent:GetClass())
+        if ent:GetClass() ~= "prop_physics" and ent:GetClass() ~= "prop_ragdoll" then continue end
+
+        local phys = ent:GetPhysicsObject()
+
+        -- HitPos is EndPos if trace hit nothing
+        print("distance:", ent:GetPos():Distance(tr.HitPos))
+        if ent:GetPos():DistToSqr(tr.HitPos) < dist^2 and not IsValid(ent:GetParent()) and self:CanTele(ent, phys) then
+            sel_ent = ent
+            print("found entity:", sel_ent:GetClass())
+            dist = ent:GetPos():Distance(tr.HitPos)
+        end
+    end
+
+    return sel_ent
+
+end
+
+
+
+function SWEP:CalculateManaCost(ent, only_shot)
+    if not IsValid(ent) then return end
+
+    local mass = ent.Mass
+
+    if not mass then
+        if ent:GetClass() ~= "prop_ragdoll" then
+            local phys = ent:GetPhysicsObject()
+            if IsValid(phys) then
+                mass = phys:GetMass()
+            else
+                mass = 50
+            end
+        else
+            mass = 85
+        end
+    end
+
+    print("Calculate Mana Cost:", mass)
+
+    local mana_cost =  math.Clamp(mass / 3, self.Primary.ManaMin, self.Primary.ManaMax)
+
+    if not only_shot then mana_cost = mana_cost + self.Secondary.Mana end
+
+    return mana_cost
 end
