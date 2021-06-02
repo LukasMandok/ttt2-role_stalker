@@ -119,7 +119,7 @@ end
 
 -- Remove Hooks if Round has ended
 hook.Add("TTTEndRound", "RemoveStalkerHooks", function()
-    hook.Remove("KeyPress", "StalkerEnterStalker")
+    --hook.Remove("KeyPress", "StalkerEnterStalker")
     hook.Remove("PreDrawHalos", "HighlightTeleObjects")
     hook.Remove("CreateMove", "RemoveHighlightObject")
 end)

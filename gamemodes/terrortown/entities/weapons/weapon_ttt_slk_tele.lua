@@ -100,6 +100,8 @@ local function drawOutline()
     return end
 
     if IsValid(ply.HighlightObject) then
+        if not ply:GetManaCost() then return end
+        
         local clr
         if ply:GetMana() < ply:GetManaCost() then
             clr = Color(255, 0, 0)
@@ -281,7 +283,7 @@ function SWEP:PrimaryAttack()
 
     self:SetNextPrimaryFire(CurTime() + self.Primary.Delay)
 
-    if self:ShotTele() then
+    if self:LaunchTele() then
         self:SetNextSecondaryFire(CurTime() + self.Secondary.Delay)
 
         if SERVER then
@@ -342,18 +344,19 @@ function SWEP:CreateTeleProp(ent)
     local psy = ents.Create("ttt_tele_object")
     psy:SetOwner(owner)
     psy:SetAngles(ent:GetAngles())
-    psy:SetProp(ent)
+    --psy:SetProp(ent)
+    psy:SetCollides(true)  -- !!!!!!!!!!!!!!!!!!!!!!!! true
 
     if ent:GetClass() == "prop_ragdoll" then
-        psy:SetCollides(true)
         psy:SetTrueParent(ent)
-        psy:SetPos(ent:LocalToWorld(ent:OBBCenter()))
-        psy:SetModel("models/props_junk/propanecanister001a.mdl")
-        -- Hard coding Mass of Object
+        psy:SetPos(ent:GetPos()) --LocalToWorld(ent:OBBCenter())
+        print("Set Model")
+        psy:SetModel(ent:GetModel()) --"models/props_junk/propanecanister001a.mdl"
+        
     else
         psy:SetParent(ent)
-        psy:SetModel(ent:GetModel())
         psy:SetPos(ent:GetPos())
+        psy:SetModel(ent:GetModel())
     end
 
     local phys = ent:GetPhysicsObject()
@@ -363,6 +366,7 @@ function SWEP:CreateTeleProp(ent)
         if ent:GetClass() ~= "prop_ragdoll" then
             psy:SetMass(math.Clamp(phys:GetMass(), 10, 200))
         else
+            -- Hard coding Mass of Object
             psy:SetMass(85)
         end
         psy:SetPhysMat(phys:GetMaterial())
@@ -379,14 +383,14 @@ function SWEP:CreateTeleProp(ent)
 end
 
 -- Lanches Object, if one is controlled with telekinesis
-function SWEP:ShotTele()
+function SWEP:LaunchTele()
 
-    print("Activate ShotTele")
+    print("Activate LaunchTele")
     -- TODO: Entfernung beachten
     local tr = util.TraceLine(util.GetPlayerTrace(self:GetOwner()))
 
     if IsValid(self.Prop) then
-        print("ShotTele is carried out!")
+        print("LaunchTele is carried out!")
         self.Prop:EmitSound(self.Secondary.TeleShot, 100, math.random(100, 120))
         self.Prop:SetLaunchTarget(tr.HitPos)
         self.Prop = nil
@@ -419,7 +423,7 @@ function SWEP:StartTele()
     return false
 end
 
-
+-- Help Functions
 
 function plymeta:FindTeleObject(spos, sdest, doDrawing)
     local tr = util.TraceLine({
@@ -520,8 +524,6 @@ function plymeta:FindTeleObject(spos, sdest, doDrawing)
     return sel_ent
 
 end
-
-
 
 function SWEP:CalculateManaCost(ent, only_shot)
     if not IsValid(ent) then return end
