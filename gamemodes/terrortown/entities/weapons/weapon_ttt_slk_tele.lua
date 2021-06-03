@@ -62,8 +62,8 @@ SWEP.Primary.Automatic      = false
 SWEP.Primary.ClipSize       = 1 -- 1
 SWEP.Primary.DefaultClip    = 1 -- 1
 SWEP.Primary.Ammo           = "stalker_tele" -- do i need this?
-SWEP.Primary.Tele           = Sound("npc/turret_floor/active.wav")
-SWEP.Primary.Miss           = Sound("ambient/atmosphere/cave_hit2.wav")
+SWEP.Primary.TeleSound      = Sound("npc/turret_floor/active.wav")
+SWEP.Primary.MissSound      = Sound("ambient/atmosphere/cave_hit2.wav")
 SWEP.Primary.ManaMin        = 10
 SWEP.Primary.ManaMax        = 75
 
@@ -73,7 +73,7 @@ SWEP.Secondary.Automatic    = false
 SWEP.Secondary.DefaultClip  = -1
 SWEP.Secondary.ClipSize     = -1
 SWEP.Secondary.Ammo         = "none"
-SWEP.Secondary.TeleShot     = Sound("ambient/levels/citadel/portal_beam_shoot5.wav")
+SWEP.Primary.TeleShotSound  = Sound("ambient/levels/citadel/portal_beam_shoot5.wav")
 SWEP.Secondary.Mana         = 25
 
 -- TTT2 related
@@ -96,10 +96,12 @@ local function drawOutline()
     local wep = ply:GetActiveWeapon()
 
     if wep:GetClass() ~= "weapon_ttt_slk_tele" or ply:GetNWBool("ttt2_slk_tele_active") then
-        print("Tele is aktive:")
+        --print("Tele is aktive:")
     return end
 
     if IsValid(ply.HighlightObject) then
+        if not ply:GetManaCost() then return end
+        
         local clr
         if ply:GetMana() < ply:GetManaCost() then
             clr = Color(255, 0, 0)
@@ -218,7 +220,7 @@ function SWEP:Think()
             owner.HighlightObject = owner:FindTeleObject(spos, sdest)
 
             if IsValid(owner.HighlightObject) then
-                print("Add highlight for:", owner.HighlightObject:GetClass(), "with Mass:", owner.HighlightObject.Mass)
+                --print("Add highlight for:", owner.HighlightObject:GetClass(), "with Mass:", owner.HighlightObject.Mass)
                 owner:SetManaCost(self:CalculateManaCost(owner.HighlightObject))
             else
                 owner:SetManaCost(nil)
@@ -261,12 +263,12 @@ function SWEP:CanSecondaryAttack()
     -- end
     -- print("AmmoCOunt:", self:GetOwner():GetAmmoCount(self:GetPrimaryAmmoType()))
     -- if self:GetOwner():GetAmmoCount(self:GetPrimaryAmmoType()) < 1 then
-    --     self:GetOwner():EmitSound( self.Primary.Miss, 40, 250 )
+    --     self:GetOwner():EmitSound( self.Primary.MissSound, 40, 250 )
     -- return false
     -- end
     if self:Clip1() < 1 then
         --print("not enough ammo:", self:Clip1())
-        self:GetOwner():EmitSound( self.Primary.Miss, 40, 250 )
+        self:GetOwner():EmitSound( self.Primary.MissSound, 40, 250 )
         self:SetNextSecondaryFire(CurTime() + self.Primary.Delay)
         return false
     end
@@ -281,7 +283,7 @@ function SWEP:PrimaryAttack()
 
     self:SetNextPrimaryFire(CurTime() + self.Primary.Delay)
 
-    if self:ShotTele() then
+    if self:LaunchTele() then
         self:SetNextSecondaryFire(CurTime() + self.Secondary.Delay)
 
         if SERVER then
@@ -323,7 +325,7 @@ function plymeta:CanTele(ent, phys)
     if (string.find(ent:GetClass(), "prop_phys") or ent:GetClass() == "prop_ragdoll") and not IsValid(ent:GetParent()) then
         if SERVER then
             if IsValid(phys) and phys:IsMotionEnabled() and phys:IsMoveable() then
-                print("!!! Class of Object: " .. ent:GetClass() .. ",  with mass: " .. tostring(phys:GetMass()))
+                --print("!!! Class of Object: " .. ent:GetClass() .. ",  with mass: " .. tostring(phys:GetMass()))
                 return true
             end
         else
@@ -338,7 +340,7 @@ end
 function SWEP:CreateTeleProp(ent)
     local owner = self:GetOwner()
     --print("Turn Prop into CreateTeleProp")
-    ent.Tele = true
+    --ent.Tele = true
     local psy = ents.Create("ttt_tele_object")
     psy:SetOwner(owner)
     psy:SetAngles(ent:GetAngles())
@@ -359,7 +361,7 @@ function SWEP:CreateTeleProp(ent)
     local phys = ent:GetPhysicsObject()
 
     if IsValid(phys) then
-        print("Set Mass for Object", ent, "mass:", math.Clamp(phys:GetMass(), 10, 200))
+        --print("Set Mass for Object", ent, "mass:", math.Clamp(phys:GetMass(), 10, 200))
         if ent:GetClass() ~= "prop_ragdoll" then
             psy:SetMass(math.Clamp(phys:GetMass(), 10, 200))
         else
@@ -372,24 +374,24 @@ function SWEP:CreateTeleProp(ent)
     end
 
     psy:Spawn()
-    self.Prop = psy
-    owner:EmitSound(self.Primary.Tele, 50)
+    self.Psy = psy
+    owner:EmitSound(self.Primary.TeleSound, 50)
     -- net.Start("Flay")
     -- net.Send(owner)
 end
 
 -- Lanches Object, if one is controlled with telekinesis
-function SWEP:ShotTele()
+function SWEP:LaunchTele()
 
-    print("Activate ShotTele")
+    --print("Activate LaunchTele")
     -- TODO: Entfernung beachten
     local tr = util.TraceLine(util.GetPlayerTrace(self:GetOwner()))
 
-    if IsValid(self.Prop) then
-        print("ShotTele is carried out!")
-        self.Prop:EmitSound(self.Secondary.TeleShot, 100, math.random(100, 120))
-        self.Prop:SetLaunchTarget(tr.HitPos)
-        self.Prop = nil
+    if IsValid(self.Psy) then
+        --print("LaunchTele is carried out!")
+        self.Psy:EmitSound(self.Primary.TeleShotSound, 100, math.random(100, 120))
+        self.Psy:SetLaunchTarget(tr.HitPos)
+        self.Psy = nil
 
         return true
     end
@@ -415,7 +417,7 @@ function SWEP:StartTele()
         return true
     end
 
-    owner:EmitSound(self.Primary.Miss, 50, 250)
+    owner:EmitSound(self.Primary.MissSound, 50, 250)
     return false
 end
 
@@ -433,12 +435,12 @@ function plymeta:FindTeleObject(spos, sdest, doDrawing)
         if SERVER then
             local phys = tr.Entity:GetPhysicsObject()
             if IsValid(phys) and self:CanTele(tr.Entity, phys) then
-                print("Found Object Line Trace")
+                --print("Found Object Line Trace")
                 return tr.Entity
             end
         else
             if self:CanTele(tr.Entity) then
-                print("Found Object Line Trace")
+                --print("Found Object Line Trace")
                 return tr.Entity
             end
         end
@@ -475,7 +477,7 @@ function plymeta:FindTeleObject(spos, sdest, doDrawing)
     --     return ent
     -- end
 
-    print("Try Surounding")
+    --print("Try Surounding")
 
     -- using FindByClass
 
@@ -498,21 +500,21 @@ function plymeta:FindTeleObject(spos, sdest, doDrawing)
     -- end
 
     -- FindInSphere
-    local dist = 50
+    local dist = 75
     local sel_ent
     tbl = ents.FindInSphere(tr.HitPos, dist)
 
     for k, ent in pairs(tbl) do
-        print("test:", ent:GetClass())
+        --print("test:", ent:GetClass())
         if ent:GetClass() ~= "prop_physics" and ent:GetClass() ~= "prop_ragdoll" then continue end
 
         local phys = ent:GetPhysicsObject()
 
         -- HitPos is EndPos if trace hit nothing
-        print("distance:", ent:GetPos():Distance(tr.HitPos))
+        --print("distance:", ent:GetPos():Distance(tr.HitPos))
         if ent:GetPos():DistToSqr(tr.HitPos) < dist^2 and not IsValid(ent:GetParent()) and self:CanTele(ent, phys) then
             sel_ent = ent
-            print("found entity:", sel_ent:GetClass())
+            --print("found entity:", sel_ent:GetClass())
             dist = ent:GetPos():Distance(tr.HitPos)
         end
     end
