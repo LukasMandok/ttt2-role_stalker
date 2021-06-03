@@ -95,6 +95,8 @@ if SERVER then
         ply:SetStalkerMode_slk(false)
         STATUS:RemoveStatus(ply, "ttt2_hdn_invisbility")
 
+        hook.Remove("PreDrawHalos", "HighlightTeleObjects")
+        hook.Remove("CreateMove", "RemoveHighlightObject")
     end
 
     hook.Add("KeyPress", "StalkerEnterStalker", function(ply, key)
@@ -117,9 +119,9 @@ if SERVER then
     end)
 end
 
--- Remove Hooks if Round has ended
-hook.Add("TTTEndRound", "RemoveStalkerHooks", function()
-    --hook.Remove("KeyPress", "StalkerEnterStalker")
-    hook.Remove("PreDrawHalos", "HighlightTeleObjects")
-    hook.Remove("CreateMove", "RemoveHighlightObject")
-end)
+-- -- Remove Hooks if Round has ended
+-- hook.Add("TTTEndRound", "RemoveStalkerHooks", function()
+--     --hook.Remove("KeyPress", "StalkerEnterStalker")
+--     hook.Remove("PreDrawHalos", "HighlightTeleObjects")
+--     hook.Remove("CreateMove", "RemoveHighlightObject")
+-- end)

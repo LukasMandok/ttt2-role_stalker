@@ -10,14 +10,12 @@ if SERVER then
     function ENT:Initialize()
         self.HitEntities = {}
         -- create new separate and invisible physics Object
-        print("sucess with physcics Init:", self:PhysicsInit(SOLID_VPHYSICS))
+        self:PhysicsInit(SOLID_NONE) --SOLID_VPHYSICS
         --self:SetSolid(SOLID_VPHYSICS)
-        self:SetMoveType(MOVETYPE_VPHYSICS)
+        self:SetMoveType(MOVETYPE_VPHYSICS) --MOVETYPE_VPHYSICS
 
         -- self:SetCollisionGroup( COLLISION_GROUP_PROJECTILE ) -- This might not be needed
 		-- self:SetTrigger(true)	
-
-        -- self:AddCallback( "PhysicsCollide", PhysCallback )
 
         self:DrawShadow(false)
         local phys = self:GetPhysicsObject()
@@ -27,21 +25,21 @@ if SERVER then
         -- end
 
         -- if colisions are enabled set solif type -> interacts with other phys objects
-        if self.Collides then
-            --self:SetSolid(SOLID_VPHYSICS)
-            --self:SetSolidFlags(FSOLID_TRIGGER)
-            if IsValid(phys) then
-                phys:Wake()
-                phys:SetMaterial(self.PhysMat)
-                phys:EnableGravity(false)
-            end
-        else
-            self:SetSolid(SOLID_NONE)
-            if IsValid(phys) then
-                phys:Wake()
-                phys:SetMaterial(self.PhysMat)
-            end
+        -- if self.Collides then
+        --     --self:SetSolid(SOLID_VPHYSICS)
+        --     --self:SetSolidFlags(FSOLID_TRIGGER)
+        if IsValid(phys) then
+            phys:Wake()
+            phys:SetMaterial(self.PhysMat)
+            phys:EnableGravity(false)
         end
+        -- else
+        --     self:SetSolid(SOLID_NONE)
+        --     if IsValid(phys) then
+        --         phys:Wake()
+        --         phys:SetMaterial(self.PhysMat)
+        --     end
+        -- end
 
         self.DieTime = CurTime() + 5
 
@@ -49,6 +47,14 @@ if SERVER then
         local par = self:GetTrueParent()
 
         if IsValid(par) then
+
+            self.CallbackID = par:AddCallback( "PhysicsCollide", function(ent, data)
+                -- print("data:", data, "phys", phys)
+                -- print("Mass:", phys.GetMass and phys:GetMass() or "Mass not available")
+                local phys = ent:GetPhysicsObject()
+                --print("Masss of manual phsy:",  phys.GetMass and phys:GetMass() or "Mass not available")
+                self:PhysicsParCollide(phys, data)
+            end)
 
             -- if Ragdoll
             if par:GetClass() == "prop_ragdoll" then
@@ -58,17 +64,17 @@ if SERVER then
 
                 -- iterate over all ragdol parts and disable gravity
                 for i = 0, 16 do
-                    local phys = par:GetPhysicsObjectNum(i)
+                    local phys_i = par:GetPhysicsObjectNum(i)
 
-                    if IsValid(phys) then
-                        phys:AddGameFlag(FVPHYSICS_NO_IMPACT_DMG) --
+                    if IsValid(phys_i) then
+                        phys_i:AddGameFlag(FVPHYSICS_NO_IMPACT_DMG) --
                         --par:SetSolid(SOLID_NONE) --
                         --par:SetSolidFlags(FSOLID_NOT_SOLID) --
-
-                        phys:EnableGravity(false)
-                        phys:Wake()
-                        phys:AddAngleVelocity(VectorRand() * 800)
-                        table.insert(par.Cons, constraint.NoCollide(self, par, 0, i))
+                        phys_i:EnableMotion(true)
+                        phys_i:EnableGravity(false)
+                        phys_i:Wake()
+                        phys_i:AddAngleVelocity(VectorRand() * 800)
+                        table.insert(par.Cons, constraint.NoCollide(self, par, 0, i)) -- self
                     end
                 end
 
@@ -110,9 +116,9 @@ if SERVER then
         return NULL
     end
 
-    function ENT:SetCollides(bool)
-        self.Collides = bool
-    end
+    -- function ENT:SetCollides(bool)
+    --     self.Collides = bool
+    -- end
 
     function ENT:SetProp(ent)
         self.Prop = ent
@@ -146,20 +152,34 @@ if SERVER then
 
                         if IsValid(phys_i) then
                             phys_i:EnableGravity(true)
+                            phys_i:ApplyForceCenter((phys_i:GetMass() * 500) * self.LaunchDir)
                             phys_i:Wake()
                         end
                     end
                 end
 
                 -- If prop should collide also update information of the new phys object
-                if self.Collides then
-                    phys = self:GetPhysicsObject()
+                --if self.Collides then
+                phys = self:GetPhysicsObject()
 
-                    if IsValid(phys) then
-                        phys:EnableGravity(true)
-                        phys:ApplyForceCenter((self.Mass * 2500) * self.LaunchDir) --9000
-                    end
+                if IsValid(phys) then
+                    phys:EnableGravity(true)
+                    phys:ApplyForceCenter((self.Mass * 2500) * self.LaunchDir) --9000
+                
+                    -- if self:GetClass() == "prop_ragdoll" then
+                    --     local phys_i
+                    --     for i = 0, 16 do
+                    --         phys_i = self:GetPhysicsObjectNum(i)
+
+                    --         if IsValid(phys_i) then
+                    --             phys_i:EnableGravity(true)
+                    --             phys_i:ApplyForceCenter((phys_i:GetMass() * 500) * self.LaunchDir)
+                    --             phys_i:Wake()
+                    --         end
+                    --     end
+                    -- end
                 end
+                --end
             end
         end
 
@@ -179,6 +199,7 @@ if SERVER then
         print("OnRemove Object")
         self:GetOwner():SetNWBool("ttt2_slk_tele_active", false)
         local par = self:GetTrueParent()
+        par:RemoveCallback("PhysicsCollide", self.CallbackID)
 
         if IsValid(par) then
             if par:GetClass() == "prop_ragdoll" then
@@ -189,7 +210,6 @@ if SERVER then
                 end
             end
 
-            par.Tele = nil
             self.Prop = nil
             local phys = par:GetPhysicsObject()
 
@@ -209,7 +229,8 @@ if SERVER then
 
         damage = math.Clamp(mass * speed * 0.001 * 3, self.MinDamage, self.MaxDamage)
 
-        print("\tdamage = ", tostring(math.Round(damage)))
+        print("mass = " .. tostring(mass), "speed = " .. tostring(speed))
+        print("\t-> damage = ", tostring(math.Round(damage)))
 
         dmg:SetDamage(damage)
         dmg:SetAttacker(self:GetOwner())
@@ -221,13 +242,9 @@ if SERVER then
         target:TakeDamageInfo(dmg)
     end
 
-    function ENT:PhysicsCollide(data, phys)
-        if self.Collides and data.DeltaTime > 0.15 then
-            self:EmitSound("Flesh.ImpactHard", 100, math.random(80, 100))
-            util.Decal("Blood", data.HitPos + data.HitNormal, data.HitPos - data.HitNormal)
-        end
-        print("\nImpact of:", phys, "mass = " .. tostring(phys:GetMass()) .. "  target:", data.HitEntity, "speed = " .. tostring(math.Round(data.Speed)))
-       -- PrintTable(data) -- , "interia =", phys:GetInertia() --"vel =", phys:GetVelocity(), 
+    function ENT:PhysicsParCollide(phys, data)
+        --print("self:", self, "phys:", phys, "data:", data)
+        --print("mass = ", phys:GetMass(), "  target:", data.HitEntity, "speed = " .. tostring(math.Round(data.Speed)))
 
         local target = data.HitEntity
 
@@ -242,17 +259,30 @@ if SERVER then
         local pos = data.HitPos
 
         self:DamagePlayer(target, mass, speed, dir, pos)
-        -- print("FVPHYSICS_CONSTRAINT_STATIC", phys:HasGameFlag(FVPHYSICS_CONSTRAINT_STATIC))
-        -- print("FVPHYSICS_HEAVY_OBJECT", phys:HasGameFlag(FVPHYSICS_HEAVY_OBJECT))
-        -- print("FVPHYSICS_MULTIOBJECT_ENTITY", phys:HasGameFlag(FVPHYSICS_MULTIOBJECT_ENTITY))
-        -- print("FVPHYSICS_NO_IMPACT_DMG", phys:HasGameFlag(FVPHYSICS_NO_IMPACT_DMG))
-        -- print("FVPHYSICS_NO_PLAYER_PICKUP", phys:HasGameFlag(FVPHYSICS_NO_PLAYER_PICKUP))
-        -- print("FVPHYSICS_NO_SELF_COLLISIONS", phys:HasGameFlag(FVPHYSICS_NO_SELF_COLLISIONS))
-        -- print("FVPHYSICS_PENETRATING", phys:HasGameFlag(FVPHYSICS_PENETRATING))
-        -- print("FVPHYSICS_PLAYER_HELD", phys:HasGameFlag(FVPHYSICS_PLAYER_HELD))
-        -- print("FVPHYSICS_WAS_THROWN", phys:HasGameFlag(FVPHYSICS_WAS_THROWN))
-        -- print("FVPHYSICS_PART_OF_RAGDOLL", phys:HasGameFlag(FVPHYSICS_PART_OF_RAGDOLL))
     end
+
+    -- function ENT:PhysicsCollide(data, phys)
+    --     if self.Collides and data.DeltaTime > 0.15 then
+    --         self:EmitSound("Flesh.ImpactHard", 100, math.random(80, 100))
+    --         util.Decal("Blood", data.HitPos + data.HitNormal, data.HitPos - data.HitNormal)
+    --     end
+    --     print("\nImpact of:", phys, "mass = " .. tostring(phys:GetMass()) .. "  target:", data.HitEntity, "speed = " .. tostring(math.Round(data.Speed)))
+    --    -- PrintTable(data) -- , "interia =", phys:GetInertia() --"vel =", phys:GetVelocity(), 
+
+    --     local target = data.HitEntity
+
+    --     if not target:IsPlayer() or self.HitEntities[target] then return end
+
+    --     self.HitEntities[target] = true
+        
+    --     local mass = phys:GetMass()
+    --     local speed = data.Speed
+    --     local dir = data.OurOldVelocity
+    --     dir:Normalize()
+    --     local pos = data.HitPos
+
+    --     self:DamagePlayer(target, mass, speed, dir, pos)
+    -- end
 
     -- function ENT:PhysCallback(data, phys)
     --     print("phys callback:", phys, "collides with:", data.HitEntity)
