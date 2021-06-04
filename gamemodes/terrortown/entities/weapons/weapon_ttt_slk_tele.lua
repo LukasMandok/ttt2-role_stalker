@@ -322,7 +322,7 @@ function plymeta:CanTele(ent, phys)
     -- TODO: Test for Mana
     -- return canTele, enoughMana
 
-    if (string.find(ent:GetClass(), "prop_phys") or ent:GetClass() == "prop_ragdoll") and not IsValid(ent:GetParent()) then
+    if (string.find(ent:GetClass(), "prop_phys") or ent:GetClass() == "prop_ragdoll" ) and not IsValid(ent:GetParent()) then --or string.find(ent:GetClass(), "item_ammo")
         if SERVER then
             if IsValid(phys) and phys:IsMotionEnabled() and phys:IsMoveable() then
                 --print("!!! Class of Object: " .. ent:GetClass() .. ",  with mass: " .. tostring(phys:GetMass()))
@@ -346,13 +346,18 @@ function SWEP:CreateTeleProp(ent)
     psy:SetAngles(ent:GetAngles())
     psy:SetProp(ent)
 
-    if ent:GetClass() == "prop_ragdoll" then
+    if ent:IsRagdoll() then
         psy:SetCollides(true)
         psy:SetTrueParent(ent)
         psy:SetPos(ent:LocalToWorld(ent:OBBCenter()))
         psy:SetModel("models/props_junk/propanecanister001a.mdl")
         -- Hard coding Mass of Object
+    elseif string.find(ent:GetClass(), "prop_phys") then
+        psy:SetParent(ent)
+        psy:SetModel(ent:GetModel())
+        psy:SetPos(ent:GetPos())
     else
+        psy:SetCollides(false)
         psy:SetParent(ent)
         psy:SetModel(ent:GetModel())
         psy:SetPos(ent:GetPos())
@@ -362,7 +367,7 @@ function SWEP:CreateTeleProp(ent)
 
     if IsValid(phys) then
         --print("Set Mass for Object", ent, "mass:", math.Clamp(phys:GetMass(), 10, 200))
-        if ent:GetClass() ~= "prop_ragdoll" then
+        if ent:IsRagdoll() then
             psy:SetMass(math.Clamp(phys:GetMass(), 10, 200))
         else
             psy:SetMass(85)
@@ -505,8 +510,8 @@ function plymeta:FindTeleObject(spos, sdest, doDrawing)
     tbl = ents.FindInSphere(tr.HitPos, dist)
 
     for k, ent in pairs(tbl) do
-        --print("test:", ent:GetClass())
-        if ent:GetClass() ~= "prop_physics" and ent:GetClass() ~= "prop_ragdoll" then continue end
+        print("test:", ent:GetClass())
+        if ent:GetClass() ~= "prop_physics" and ent:GetClass() ~= "prop_ragdoll" then continue end -- and not string.find(ent:GetClass(), "item_ammo")
 
         local phys = ent:GetPhysicsObject()
 
@@ -531,7 +536,7 @@ function SWEP:CalculateManaCost(ent, only_shot)
     local mass = ent.Mass
 
     if not mass then
-        if ent:GetClass() ~= "prop_ragdoll" then
+        if ent:IsRagdoll() then
             local phys = ent:GetPhysicsObject()
             if IsValid(phys) then
                 mass = phys:GetMass()
