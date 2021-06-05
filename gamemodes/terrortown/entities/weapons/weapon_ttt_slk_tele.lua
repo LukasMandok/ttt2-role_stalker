@@ -132,6 +132,43 @@ end
 ------- Initialize Weapon and Add Hooks -------- 
 ------------------------------------------------
 
+-- Initialize TeleEntities
+
+local function createTeleEntry(ent)
+    print("add:", ent:GetClass())
+    return { ["Mass"]  = nil,
+             ["Class"] = ent:GetClass(),
+             ["Ent"]   = ent}
+end
+
+function SWEP:InitializeTeleEnts()
+    print("Initialize Tele Ents")
+    self.TeleEnts = {}
+
+    for i,ent in ipairs(ents.GetAll()) do
+        -- physic props
+        if string.find(ent:GetClass(), "prop_phys*") then
+            self.TeleEnts[ent:EntIndex()] = createTeleEntry(ent)
+
+        -- spawnable weapons
+        elseif string.find(ent:GetClass(), "weapon_*") then
+            if ent.AutoSpawnable and not IsValid(ent:GetOwner()) then
+                self.TeleEnts[ent:EntIndex()] = createTeleEntry(ent)
+            end
+
+        -- spawnable ammo
+        elseif string.find(ent:GetClass(), "item_ammo_*") or string.find(ent:GetClass(), "item_box_*") then
+            if ent.AutoSpawnable then
+                self.TeleEnts[ent:EntIndex()] = createTeleEntry(ent)
+            end
+        end
+    end
+    --PrintTable(self.TeleEnts)
+end
+
+
+-- General Initialization
+
 function SWEP:ShopInit()
     AddToShopFallback(STALKER.fallbackTable, ROLE_STALKER, self)
     --AddWeaponIntoFallbackTable(self.id, STALKER)
@@ -140,6 +177,8 @@ end
 function SWEP:Initialize()
     self:SetWeaponHoldType(self.HoldType)
 
+    self:InitializeTeleEnts()
+
     if CLIENT then
         net.Start("RequestMassList")
         net.SendToServer()
@@ -147,26 +186,36 @@ function SWEP:Initialize()
         net.ReceiveStream("SendMassList", function(masses)
             for ent_index, mass in pairs(masses) do
                 --print(ent_index, mass)
-
-                local ent = ents.GetByIndex(ent_index)
-
-                if IsValid(ent) then
-                    --print("Mass of ent:", ent:GetClass(), ent.Mass, mass)
+                local ent = self.TeleEnts[ent_index]
+                if ent then
                     ent.Mass = mass
+                    ent.Ent.Mass = mass
                 end
+
+                -- local ent = ents.GetByIndex(ent_index)
+
+                -- if IsValid(ent) then
+                --     --print("Mass of ent:", ent:GetClass(), ent.Mass, mass)
+                --     ent.Mass = mass
+                -- end
             end
+            --PrintTable(self.TeleEnts)
         end)
 
 
     -- if SERVER
     else
         net.Receive("RequestMassList", function(len, ply)
+            print("requested physics list")
             local masses = {}
-            for k, ent in pairs(ents.FindByClass("prop_phys*")) do
+            for index, entry in pairs(self.TeleEnts) do
+                local ent = entry.Ent
                 local phys = ent:GetPhysicsObject()
                 if IsValid(phys) then
-                    ent.Mass = phys:GetMass()
-                    masses[ent:EntIndex()] = phys:GetMass()
+                    local mass = phys:GetMass()
+                    ent.Mass = mass
+                    entry.Mass = mass
+                    masses[index] = mass
                 end
             end
 
@@ -211,7 +260,7 @@ function SWEP:Think()
             local spos  = owner:GetShootPos()
             local sdest = spos + (owner:GetAimVector() * self.MaxDistance)
 
-            owner.HighlightObject = owner:FindTeleObject(spos, sdest)
+            owner.HighlightObject = self:FindTeleObject(spos, sdest)
 
             if IsValid(owner.HighlightObject) then
                 --print("Add highlight for:", owner.HighlightObject:GetClass(), "with Mass:", owner.HighlightObject.Mass)
@@ -312,11 +361,13 @@ function SWEP:SecondaryAttack()
 end
 
 -- Checks wether telekinesis can be used on an object
-function plymeta:CanTele(ent, phys)
+function SWEP:CanTele(ent, phys)
     -- TODO: Test for Mana
     -- return canTele, enoughMana
 
-    if (string.find(ent:GetClass(), "prop_phys") or ent:GetClass() == "prop_ragdoll" ) or string.find(ent:GetClass(), "item_ammo") and not IsValid(ent:GetParent()) then -- or string.find(ent:GetClass(), "item_ammo")
+    print(self.TeleEnts)
+
+    if (self.TeleEnts[ent:EntIndex()] or ent:IsRagdoll() ) and not IsValid(ent:GetParent()) and not IsValid(ent:GetOwner()) then
         if SERVER then
             if IsValid(phys) and phys:IsMotionEnabled() and phys:IsMoveable() then
                 --print("!!! Class of Object: " .. ent:GetClass() .. ",  with mass: " .. tostring(phys:GetMass()))
@@ -407,7 +458,7 @@ function SWEP:StartTele()
     local spos = owner:GetShootPos()
     local sdest = spos + (owner:GetAimVector() * self.MaxDistance)
 
-    local ent = owner:FindTeleObject(spos, sdest)
+    local ent = self:FindTeleObject(spos, sdest)
 
     if IsValid(ent) and owner:GetMana() >= self:CalculateManaCost(ent) then
         if SERVER then
@@ -425,12 +476,12 @@ end
 
 
 
-function plymeta:FindTeleObject(spos, sdest)
+function SWEP:FindTeleObject(spos, sdest)
     --filter = table.insert(filter, self)
     local tr = util.TraceLine({
         start = spos,
         endpos = sdest,
-        filter = self,
+        filter = self:GetOwner(),
         mask = MASK_SHOT_HULL,
     })
 
@@ -496,8 +547,8 @@ function plymeta:FindTeleObject(spos, sdest)
     tbl = ents.FindInSphere(tr.HitPos, dist)
 
     for k, ent in pairs(tbl) do
-        --print("test:", ent:GetClass())
-        if ent:GetClass() ~= "prop_physics" and ent:GetClass() ~= "prop_ragdoll" and not string.find(ent:GetClass(), "item_ammo") then continue end -- and not string.find(ent:GetClass(), "item_ammo")
+        print("test:", ent:GetClass(), ent)
+        if not self.TeleEnts[ent:EntIndex()] and ent:IsRagdoll() then continue end--if ent:GetClass() ~= "prop_physics" and ent:GetClass() ~= "prop_ragdoll" and not string.find(ent:GetClass(), "item_ammo") then continue end -- and not string.find(ent:GetClass(), "item_ammo")
 
         local phys = ent:GetPhysicsObject()
 

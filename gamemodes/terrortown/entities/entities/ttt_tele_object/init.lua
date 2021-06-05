@@ -65,7 +65,8 @@ function ENT:Initialize()
             if self.PsyOnly then
                 --print("SetMoveParent")
                 par:SetParent(self)
-            end
+                --ent.CanPickup = false
+            else
                         --print("Origional Solid Type:", par:GetSolid(), par:GetSolidFlags(), "new:", SOLID_VPHYSICS)
             --print("Origional Move Type:", par:GetMoveType(), "new:", MOVETYPE_VPHYSICS)
             -- par:SetSolid(SOLID_VPHYSICS)
@@ -90,7 +91,7 @@ function ENT:Initialize()
             else
                 print("Has no physics Object")
             end
-            --end
+            end
         end
 
         if not self.Collides then --and not self.Inverted
@@ -161,7 +162,7 @@ function ENT:Think()
         end
     end
 
-    if self.DieTime < CurTime() or not IsValid(self:GetTrueParent()) or not (self:GetOwner() and self:GetOwner():Alive()) then
+    if self.DieTime < CurTime() or not IsValid(self:GetTrueParent()) or not (self:GetOwner() and self:GetOwner():Alive()) or (not self:GetTrueParent().Tele)  then
         self:Remove()
     end
 end
@@ -178,25 +179,25 @@ function ENT:OnRemove()
     self:GetOwner():SetNWBool("ttt2_slk_tele_active", false)
     local par = self:GetTrueParent()
 
-    if self.PsyOnly then
-        --print("RemoveParent", par:GetParent(), par:GetMoveParent())
-        par:SetParent()
-        par:SetPos( self:GetPos() )
-        par:SetAngles( self:GetAngles() )
-        par:SetVelocity( self:GetVelocity() )
-        par:SetLocalAngularVelocity (self:GetLocalAngularVelocity() )
-
-        -- local phys = par:GetPhysicsObject()
-        -- if IsValid(phys) then
-        --     phys:SetLocalAngularVelocity(Angle angVel)
-        -- end
-    end
-
-    if self.CallbackID then
-        par:RemoveCallback("PhysicsCollide", self.CallbackID)
-    end
-
     if IsValid(par) then
+        if self.PsyOnly then
+            print("RemoveParent", par:GetParent(), par:GetMoveParent())
+            par:SetParent()
+            par:SetPos( self:GetPos() )
+            par:SetAngles( self:GetAngles() )
+            par:SetVelocity( self:GetVelocity() )
+            par:SetLocalAngularVelocity (self:GetLocalAngularVelocity() )
+
+            -- local phys = par:GetPhysicsObject()
+            -- if IsValid(phys) then
+            --     phys:SetLocalAngularVelocity(Angle angVel)
+            -- end
+        end
+
+        if self.CallbackID then
+            par:RemoveCallback("PhysicsCollide", self.CallbackID)
+        end
+    
         if par:IsRagdoll() then
             for k, v in pairs(par.Cons) do
                 if IsValid(v) then
@@ -209,6 +210,8 @@ function ENT:OnRemove()
         end
 
         self.Prop = nil
+        par.Tele = nil
+
         local phys = par:GetPhysicsObject()
 
         if IsValid(phys) then
@@ -287,3 +290,21 @@ end
 function ENT:UpdateTransmitState()
     return TRANSMIT_ALWAYS
 end
+
+-- hook.Add("PlayerCanPickupWeapon", "PreventPickupTeleWep", function(ply, wep)
+--     if wep.Tele == true then 
+--         return false 
+--     end
+-- end)
+
+-- hook.Add("TTTCanPickupAmmo", "PreventPickupTeleAmmo", function(ply, ammo)
+--     if ammo.Tele == true then 
+--         return false
+--     end
+-- end)
+
+hook.Add("WeaponEquip", "ChangeTelePropertyIfPickedUp", function( wep, ply )
+    if wep.Tele == true then
+        wep.Tele = nil
+    end
+end)
