@@ -146,24 +146,18 @@ function SWEP:Initialize()
 
         net.ReceiveStream("SendMassList", function(masses)
             for ent_index, mass in pairs(masses) do
-                print(ent_index, mass)
+                --print(ent_index, mass)
 
                 local ent = ents.GetByIndex(ent_index)
 
                 if IsValid(ent) then
-                    print("Mass of ent:", ent:GetClass(), ent.Mass, mass)
+                    --print("Mass of ent:", ent:GetClass(), ent.Mass, mass)
                     ent.Mass = mass
                 end
             end
         end)
 
-        print("Adding PreDrawHalos Hook.")
-        -- Draw Halo of HighlightObject
-        -- hook.Add("PreDrawHalos", "HighlightTeleObjects", drawOutline)
 
-        -- -- Clear Highlight Object, so the Player needs to look for it again
-        -- hook.Add("CreateMove", "RemoveHighlightObject", setNewHighlightObject)
-    
     -- if SERVER
     else
         net.Receive("RequestMassList", function(len, ply)
@@ -322,7 +316,7 @@ function plymeta:CanTele(ent, phys)
     -- TODO: Test for Mana
     -- return canTele, enoughMana
 
-    if (string.find(ent:GetClass(), "prop_phys") or ent:GetClass() == "prop_ragdoll" ) and not IsValid(ent:GetParent()) then --or string.find(ent:GetClass(), "item_ammo")
+    if (string.find(ent:GetClass(), "prop_phys") or ent:GetClass() == "prop_ragdoll" ) or string.find(ent:GetClass(), "item_ammo") and not IsValid(ent:GetParent()) then -- or string.find(ent:GetClass(), "item_ammo")
         if SERVER then
             if IsValid(phys) and phys:IsMotionEnabled() and phys:IsMoveable() then
                 --print("!!! Class of Object: " .. ent:GetClass() .. ",  with mass: " .. tostring(phys:GetMass()))
@@ -340,15 +334,15 @@ end
 function SWEP:CreateTeleProp(ent)
     local owner = self:GetOwner()
     --print("Turn Prop into CreateTeleProp")
-    --ent.Tele = true
+    ent.Tele = true
     local psy = ents.Create("ttt_tele_object")
     psy:SetOwner(owner)
     psy:SetAngles(ent:GetAngles())
     psy:SetProp(ent)
 
     if ent:IsRagdoll() then
-        psy:SetCollides(true)
         psy:SetTrueParent(ent)
+        psy:SetCollides(true)
         psy:SetPos(ent:LocalToWorld(ent:OBBCenter()))
         psy:SetModel("models/props_junk/propanecanister001a.mdl")
         -- Hard coding Mass of Object
@@ -357,8 +351,10 @@ function SWEP:CreateTeleProp(ent)
         psy:SetModel(ent:GetModel())
         psy:SetPos(ent:GetPos())
     else
-        psy:SetCollides(false)
-        psy:SetParent(ent)
+        psy:SetTrueParent(ent)
+        --ent:SetParent(psy)
+        psy:SetPsyOnly(true)
+        psy:SetCollides(true)
         psy:SetModel(ent:GetModel())
         psy:SetPos(ent:GetPos())
     end
@@ -367,7 +363,7 @@ function SWEP:CreateTeleProp(ent)
 
     if IsValid(phys) then
         --print("Set Mass for Object", ent, "mass:", math.Clamp(phys:GetMass(), 10, 200))
-        if ent:IsRagdoll() then
+        if not ent:IsRagdoll() then
             psy:SetMass(math.Clamp(phys:GetMass(), 10, 200))
         else
             psy:SetMass(85)
@@ -379,6 +375,7 @@ function SWEP:CreateTeleProp(ent)
     end
 
     psy:Spawn()
+    psy:Activate()
     self.Psy = psy
     owner:EmitSound(self.Primary.TeleSound, 50)
     -- net.Start("Flay")
@@ -387,12 +384,12 @@ end
 
 -- Lanches Object, if one is controlled with telekinesis
 function SWEP:LaunchTele()
-
-    --print("Activate LaunchTele")
-    -- TODO: Entfernung beachten
-    local tr = util.TraceLine(util.GetPlayerTrace(self:GetOwner()))
-
     if IsValid(self.Psy) then
+        local ply_tr = util.GetPlayerTrace(self:GetOwner())
+        ply_tr.filter = {self:GetOwner(), self.Psy, self.Psy.Prop}
+        
+        local tr = util.TraceLine(ply_tr)
+
         --print("LaunchTele is carried out!")
         self.Psy:EmitSound(self.Primary.TeleShotSound, 100, math.random(100, 120))
         self.Psy:SetLaunchTarget(tr.HitPos)
@@ -428,7 +425,8 @@ end
 
 
 
-function plymeta:FindTeleObject(spos, sdest, doDrawing)
+function plymeta:FindTeleObject(spos, sdest)
+    --filter = table.insert(filter, self)
     local tr = util.TraceLine({
         start = spos,
         endpos = sdest,
@@ -465,18 +463,6 @@ function plymeta:FindTeleObject(spos, sdest, doDrawing)
     -- } )
 
 
-    -- if doDrawing then
-    --     local clr = color_white
-    --     if ( tr.Hit ) then
-    --         clr = Color( 255, 0, 0 )
-    --     end
-
-    --     render.DrawLine( tr.HitPos, sdest, color_white, true )
-    --     render.DrawLine( spos, tr.HitPos, Color( 0, 0, 255 ), true )
-
-    --     render.DrawWireframeBox( tr.HitPos, Angle( 0, 0, 0 ), -Vector(dist, dist, dist), Vector(dist, dist, dist), clr, true )
-    -- end
-
     -- if ( tr.Hit ) then
     --     print("HullTrace hit:", tr.Entity)
     --     return ent
@@ -510,8 +496,8 @@ function plymeta:FindTeleObject(spos, sdest, doDrawing)
     tbl = ents.FindInSphere(tr.HitPos, dist)
 
     for k, ent in pairs(tbl) do
-        print("test:", ent:GetClass())
-        if ent:GetClass() ~= "prop_physics" and ent:GetClass() ~= "prop_ragdoll" then continue end -- and not string.find(ent:GetClass(), "item_ammo")
+        --print("test:", ent:GetClass())
+        if ent:GetClass() ~= "prop_physics" and ent:GetClass() ~= "prop_ragdoll" and not string.find(ent:GetClass(), "item_ammo") then continue end -- and not string.find(ent:GetClass(), "item_ammo")
 
         local phys = ent:GetPhysicsObject()
 
@@ -547,8 +533,6 @@ function SWEP:CalculateManaCost(ent, only_shot)
             mass = 85
         end
     end
-
-    print("Calculate Mana Cost:", mass)
 
     local mana_cost =  math.Clamp(mass / 3, self.Primary.ManaMin, self.Primary.ManaMax)
 

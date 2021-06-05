@@ -4,23 +4,38 @@ ENT.Base = "base_anim"
 ENT.MaxDamage = 1000
 ENT.MinDamage = 30
 
+
+function ENT:SetCollides(bool)
+    self.Collides = bool
+end
+
+function ENT:SetProp(ent)
+    self.Prop = ent
+end
+
+function ENT:SetMass(mass)
+    self.Mass = mass
+end
+
+function ENT:SetPhysMat(mat)
+    self.PhysMat = mat
+end
+
 if SERVER then
     ENT.SpawnSound = Sound("ambient/atmosphere/city_skypass1.wav")
 
     function ENT:Initialize()
         self:PhysicsInit(SOLID_VPHYSICS)
-        --self:SetMoveType(MOVETYPE_VPHYSICS)
+        self:SetMoveType(MOVETYPE_VPHYSICS)
         self:DrawShadow(false)
+
+        self:AddEFlags( EFL_FORCE_CHECK_TRANSMIT )
 
         self.HitEntities = {}
 
         local phys = self:GetPhysicsObject()
 
-        -- if IsValid(phys) then
-        --     phys:AddGameFlag(FVPHYSICS_NO_IMPACT_DMG)
-        -- end
-
-        if self.Collides then
+        if self.Collides then -- or self.Inverted 
             self:SetSolid(SOLID_VPHYSICS)
 
             if IsValid(phys) then
@@ -63,11 +78,15 @@ if SERVER then
                     end
                 end
             else
+                if self.Collides then
+                    par:SetMoveParent(self)
+                end
                 --print("Origional Solid Type:", par:GetSolid(), par:GetSolidFlags(), "new:", SOLID_VPHYSICS)
                 --print("Origional Move Type:", par:GetMoveType(), "new:", MOVETYPE_VPHYSICS)
                 par:SetSolid(SOLID_VPHYSICS)
                 par:SetMoveType(MOVETYPE_VPHYSICS)
-                par:SetCollisionGroup(COLLISION_GROUP_PLAYER)
+                par:SetCollisionGroup(COLLISION_GROUP_PROJECTILE)
+                par:SetCustomCollisionCheck( true )
 
                 local phys = par:GetPhysicsObject()
 
@@ -86,7 +105,7 @@ if SERVER then
                 end
             end
 
-            if not self.Collides then
+            if not self.Collides then --and not self.Inverted
                 self.CallbackID = par:AddCallback("PhysicsCollide", function (ent, data)
                     --print("Collide")
                     self:PhysicsParCollide(ent:GetPhysicsObject(), data)
@@ -109,22 +128,6 @@ if SERVER then
         end
 
         return NULL
-    end
-
-    function ENT:SetCollides(bool)
-        self.Collides = bool
-    end
-
-    function ENT:SetProp(ent)
-        self.Prop = ent
-    end
-
-    function ENT:SetMass(mass)
-        self.Mass = mass
-    end
-
-    function ENT:SetPhysMat(mat)
-        self.PhysMat = mat
     end
 
     function ENT:Think()
@@ -191,6 +194,8 @@ if SERVER then
                         v:Remove()
                     end
                 end
+            elseif par.Collides then
+                par:SetParent()
             end
 
             self.Prop = nil
@@ -274,6 +279,7 @@ if CLIENT then
     ENT.RenderGroup = RENDERGROUP_TRANSLUCENT
 
     function ENT:Initialize()
+        print("Init Clientside")
         self:SetRenderMode(RENDERMODE_TRANSALPHA)
     end
 
@@ -315,7 +321,8 @@ if CLIENT then
 
     local matLight = Material("models/spawn_effect2")
 
-    function ENT:Draw()
+    function ENT:DrawTranslucent()
+        print("Draw entity")
         local eyenorm = self:GetPos() - EyePos()
         local dist = eyenorm:Length()
         eyenorm:Normalize()
