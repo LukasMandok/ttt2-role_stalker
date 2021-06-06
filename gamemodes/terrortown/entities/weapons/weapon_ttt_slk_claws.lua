@@ -3,7 +3,8 @@ if engine.ActiveGamemode() ~= "terrortown" then return end
 if SERVER then
     AddCSLuaFile()
 
-    resource.AddFile( "models/zed/weapons/v_banshee.mdl" )
+    resource.AddFile( "models/weapons/zed/v_banshee.mdl" )
+    --resource.AddFile( "models/weapons/tfa_echo/c_claws_new.mdl" )
 
     SWEP.Weight				= 1
     SWEP.AutoSwitchTo		= false
@@ -26,10 +27,10 @@ end
 
 SWEP.Base                  = "weapon_tttbase"
 
-SWEP.ViewModel             = "models/zed/weapons/v_banshee.mdl"
+SWEP.ViewModel             = "models/weapons/zed/v_banshee.mdl" --"models/weapons/tfa_echo/c_claws_new.mdl" -- --
 SWEP.WorldModel            = ""--"models/weapons/v_banshee.mdl" -- change this! w_pistol
-SWEP.HoldType              = "normal"
-SWEP.UseHands              = false --true
+SWEP.HoldType              = "fist" --knife
+SWEP.UseHands              = false
 
 SWEP.Kind                  = WEAPON_PISTOL
 
@@ -38,9 +39,9 @@ SWEP.Primary.Damage        = 33
 SWEP.Primary.Delay         = 0.75
 SWEP.Primary.Automatic     = true
 
-SWEP.Primary.ClipSize      = -1 -- 1
-SWEP.Primary.DefaultClip   = -1 -- 1
-SWEP.Primary.Ammo          = "none" -- do i need this?
+SWEP.Primary.ClipSize      = -1
+SWEP.Primary.DefaultClip   = -1
+SWEP.Primary.Ammo          = "none"
 
 SWEP.Primary.Sound		   = Sound( "weapons/knife/knife_slash2.wav" )
 SWEP.Primary.Hit           = Sound( "npc/fast_zombie/claw_strike3.wav" )
@@ -59,14 +60,6 @@ SWEP.Secondary.Sound	   = Sound( "weapons/knife/knife_slash2.wav" )
 SWEP.Secondary.Hit         = Sound( "npc/fast_zombie/claw_strike3.wav" )
 
 
--- SWEP.Secondary.Select      = Sound( "ui/buttonrollover.wav" )
--- SWEP.Secondary.Miss        = Sound( "ambient/atmosphere/cave_hit2.wav" )
--- SWEP.Secondary.Flay        = Sound( "ambient/levels/citadel/portal_beam_shoot6.wav" )
--- SWEP.Secondary.Scream      = Sound( "npc/stalker/go_alert2a.wav" )
--- SWEP.Secondary.Heal        = Sound( "npc/antlion_guard/growl_idle.wav" )
--- SWEP.Secondary.Tele        = Sound( "npc/turret_floor/active.wav" )
--- SWEP.Secondary.TeleShot    = Sound( "ambient/levels/citadel/portal_beam_shoot5.wav" )
-
 -- TTT2 related
 SWEP.HitDistance = 50
 SWEP.AllowDrop   = false
@@ -80,17 +73,59 @@ SWEP.RegenTime = true
 
 function SWEP:Initialize()
     self:SetWeaponHoldType( self.HoldType )
-    --self:SetHoldType("knife")
+
+    if CLIENT then
+        self:AddTTT2HUDHelp("weapon_ttt_slk_claws_help_pri", "weapon_ttt_slk_claws_help_sec")
+    end
 end
 
--- function SWEP:Holster()
---     return false
--- end
+function SWEP:Deploy()
+    -- local vm = self.GetOwner():GetViewModel()
+    -- vm:SendViewModelMatchingSequence( vm:LookupSequence( "idle" ) ) 
+    local viewmodel = self:GetOwner():GetViewModel( 0 )
+    if ( IsValid( viewmodel ) ) then
+        --associate its weapon to us
+        viewmodel:SetWeaponModel( self.ViewModel , self )
+    end
+    self:SendViewModelAnim( ACT_VM_DEPLOY , 0 )
+
+    timer.Simple(1, function()
+        self:SendViewModelAnim( ACT_VM_IDLE , 0 )
+    end)
+    return true
+end
+
+function SWEP:Holster()
+    local viewmodel1 = self:GetOwner():GetViewModel( 0 )
+    if ( IsValid( viewmodel1 ) ) then
+        --set its weapon to nil, this way the viewmodel won't show up again
+        viewmodel1:SetWeaponModel( self.ViewModel , nil )
+    end
+    return true
+end
+
+function SWEP:SendViewModelAnim( act , index , rate )
+    if ( not game.SinglePlayer() and not IsFirstTimePredicted() ) then return end
+
+    local vm = self:GetOwner():GetViewModel( index )
+    print("vm:", vm)
+    if ( not IsValid( vm ) ) then return end
+
+    local seq = vm:SelectWeightedSequence( act )
+    print("seq:", seq)
+    if ( seq == -1 ) then return end
+
+    vm:SendViewModelMatchingSequence( seq )
+    vm:SetPlaybackRate( rate or 1 )
+end
 
 function SWEP:Equip(owner)
-    if not SERVER or not owner then return end
+    if SERVER and owner then
 
-    self:GetOwner():DrawWorldModel( true )
+        self:GetOwner():DrawWorldModel( false )
+    -- elseif CLIENT then
+    --     self:GetOwner():DrawViewModel( true )
+    end
     --self.ViewModel = "models/weapons/v_banshee.mdl"
     --self.WorldModel = ""
     -- net.Start("ttt2_hdn_network_wep")
@@ -115,7 +150,7 @@ function SWEP:PrimaryAttack()
 
         --print("target:", tgt, "pos:", spos, "destination:", sdest, "trace:", trace)
 
-        if IsValid(tgt) then
+        if IsValid(tgt) and (tgt:IsPlayer() or tgt:GetClass() == "prop_ragdoll") then
 
             --self:SendWeaponAnim(ACT_VM_MISSCENTER)
 
@@ -125,19 +160,19 @@ function SWEP:PrimaryAttack()
             eData:SetNormal(trace.Normal)
             eData:SetEntity(tgt)
 
-            if tgt:IsPlayer() or tgt:GetClass() == "prop_ragdoll" then
-                owner:SetAnimation(PLAYER_ATTACK1)
-
-                self:SendWeaponAnim( ACT_VM_PRIMARYATTACK )
-                tgt:EmitSound( self.Primary.Hit, 100, math.random(90,110) )
-                --self:SendWeaponAnim(ACT_VM_MISSCENTER)
-
-                util.Effect("BloodImpact", eData)
-            end
-        else
+            self:SendViewModelAnim( ACT_VM_PRIMARYATTACK , 0 )
             owner:SetAnimation(PLAYER_ATTACK1)
 
-            self:SendWeaponAnim(ACT_VM_MISSCENTER)
+            tgt:EmitSound( self.Primary.Hit, 100, math.random(90,110) )
+            --self:SendWeaponAnim(ACT_VM_MISSCENTER)
+
+            util.Effect("BloodImpact", eData)
+        else
+            --owner:SetAnimation(PLAYER_ATTACK1)
+            --self:SendWeaponAnim(ACT_VM_MISSCENTER)
+            self:SendViewModelAnim( ACT_VM_MISSCENTER , 0 )
+            owner:SetAnimation(PLAYER_ATTACK1)
+
             -- TODO: keine Ahnung
             owner:EmitSound( self.Primary.Sound, 100, math.random(80,100) )
         end
@@ -176,8 +211,10 @@ function SWEP:SecondaryAttack()
             -- eData:SetNormal(trace.Normal)
             -- eData:SetEntity(tgt)
 
+            -- self:SendWeaponAnim( ACT_VM_HITCENTER )
+            self:SendViewModelAnim( ACT_VM_HITCENTER , 0 )
             owner:SetAnimation(PLAYER_ATTACK1)
-            self:SendWeaponAnim( ACT_VM_HITCENTER )
+
             tgt:EmitSound( self.Secondary.Hit, 100, math.random(90,110) )
 
             self:PushObject(tgt, trace, self.Secondary.HitForce)
@@ -202,9 +239,9 @@ function SWEP:SecondaryAttack()
             --     --util.Effect("BloodImpact", eData)
             -- end
         else
-            owner:SetAnimation(PLAYER_ATTACK1)
-
-            self:SendWeaponAnim(ACT_VM_MISSCENTER)
+            -- owner:SetAnimation(PLAYER_ATTACK1)
+            -- self:SendWeaponAnim(ACT_VM_MISSCENTER)
+            self:SendViewModelAnim( ACT_VM_MISSCENTER , 0 )
             -- TODO: keine Ahnung
             owner:EmitSound( self.Secondary.Sound, 100, math.random(80,100) )
         end
@@ -390,5 +427,15 @@ function SWEP:PushObject(tgt, trace, force) -- phys, pdir, maxforce, is_ragdol
             -- infl = self
         }
     end
-    
+end
+
+
+if CLIENT then
+    function SWEP:DrawHUD()
+        self:DrawHelp()
+    end
+
+    -- function SWEP:ShouldDrawViewModel()
+    --     return true
+    -- end
 end

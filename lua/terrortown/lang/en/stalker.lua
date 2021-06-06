@@ -5,7 +5,8 @@ L[STALKER.name] = "Stalker"
 L[STALKER.defaultTeam] = "Team Stalker"
 L["hilite_win_" .. STALKER.defaultTeam] = "Team Stalkers Win"
 L["info_popup_" .. STALKER.name] = [[You are the Stalker! 
-Press Reload to transform permanently and begin killing.]]
+Press Reload to transform permanently and begin killing.
+Press Reload to recharge your mana pool, be carefull while doing so. It will reduce your cloak.]]
 L["body_found_" .. STALKER.abbr] = "They were a Stalker!"
 L["search_role_" .. STALKER.abbr] = "This person was a Stalker!"
 L["target_" .. STALKER.name] = "Stalker"
@@ -28,6 +29,25 @@ L["weapon_ttt_slk_scream_desc"] = "Scream to stun the opponents in front of you.
 L["item_ttt_slk_lifesteal_desc"] = "Get some health back, when attacking players with our claws."
 L["item_ttt_slk_mana_upgrade_desc"] = "Increase your maximal Mana Pool by 100."
 L["item_ttt_slk_mobility_desc"] = "Increases mobility by allowing you to perform very large jumps and climb walls."
+
+-- HelpHUD
+L["weapon_ttt_slk_tele_help_pri"] = "Launch the object at your intended target."
+L["weapon_ttt_slk_tele_help_sec"] = "Initiate telekinesis for an object."
+
+L["weapon_ttt_slk_scream_help_pri"] = "Execute scream attack."
+
+L["weapon_ttt_slk_claws_help_pri"] = "Attack with our claws."
+L["weapon_ttt_slk_claws_help_sec"] = "Push your target away from you."
+
+-- TargetID
+L["weapon_ttt_slk_tele_target_title"] = "Telekinesis"
+L["weapon_ttt_slk_tele_target_name"] = "Object: {name}"
+L["weapon_ttt_slk_tele_target_desc"] = "Initiate telekinesis for this object."
+L["weapon_ttt_slk_tele_target_mana"] = "mana cost: {mana}"
+
+L["weapon_ttt_slk_tele_target_ammo"] = "Ammuntion"
+L["weapon_ttt_slk_tele_target_prop"] = "Prop"
+
 
 --EPOP
 L["slk_epop_title"] = "{nick} is the Stalker!"

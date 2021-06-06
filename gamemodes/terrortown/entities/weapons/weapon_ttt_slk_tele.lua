@@ -87,47 +87,6 @@ SWEP.RenderGroup = RENDERGROUP_OPAQUE
 
 local plymeta = FindMetaTable("Player")
 
-local function drawOutline()
-    local ply = LocalPlayer()
-
-    if not IsValid(ply) or not ply:Alive() or ply:IsSpec() then return end
-    if ply:GetSubRole() ~= ROLE_STALKER or not ply:GetNWBool("ttt2_hd_stalker_mode", false) then return end
-
-    local wep = ply:GetActiveWeapon()
-
-    if wep:GetClass() ~= "weapon_ttt_slk_tele" or ply:GetNWBool("ttt2_slk_tele_active") then
-        --print("Tele is aktive:")
-    return end
-
-    if IsValid(ply.HighlightObject) then
-        if not ply:GetManaCost() then return end
-        
-        local clr
-        if ply:GetMana() < ply:GetManaCost() then
-            clr = Color(255, 0, 0)
-        else
-            clr = Color(0, 255, 0)
-        end
-
-        outline.Add(ply.HighlightObject, clr, OUTLINE_MODE_VISIBLE)
-        --halo.Add({ ply.HighlightObject }, clr, 0, 0, 3, true, true)
-    end
-end
-
-local function setNewHighlightObject(cmd)
-    local ply = LocalPlayer()
-
-    if not IsValid(ply) or not ply:Alive() or ply:IsSpec() then return end
-    if ply:GetSubRole() ~= ROLE_STALKER then return end
-    if ply:GetActiveWeapon():GetClass() ~= "weapon_ttt_slk_tele" or ply:GetNWBool("ttt2_slk_tele_active") then return end
-    
-    if cmd:GetForwardMove() ~= 0 or cmd:GetSideMove() ~= 0 or cmd:GetMouseX() ~= 0 or cmd:GetMouseY() ~= 0 then
-        ply.FindNewHighlightObject = true
-    else
-        ply.FindNewHighlightObject = false
-    end
-end
-
 ------------------------------------------------
 ------- Initialize Weapon and Add Hooks -------- 
 ------------------------------------------------
@@ -180,6 +139,8 @@ function SWEP:Initialize()
     self:InitializeTeleEnts()
 
     if CLIENT then
+        self:AddTTT2HUDHelp("weapon_ttt_slk_tele_help_pri", "weapon_ttt_slk_tele_help_sec")
+
         net.Start("RequestMassList")
         net.SendToServer()
 
@@ -224,21 +185,6 @@ function SWEP:Initialize()
     end
 end
 
-function SWEP:Deploy()
-    if SERVER then return true end
-    hook.Add("PreDrawHalos", "HighlightTeleObjects", drawOutline)
-    -- Clear Highlight Object, so the Player needs to look for it again
-    hook.Add("CreateMove", "RemoveHighlightObject", setNewHighlightObject)
-    return true
-end
-
-function SWEP:Holster()
-    if SERVER then return true end
-    hook.Remove("PreDrawHalos", "HighlightTeleObjects")
-    -- Clear Highlight Object, so the Player needs to look for it again
-    hook.Remove("CreateMove", "RemoveHighlightObject")
-    return true
-end
 
 function SWEP:Equip(owner)
     if not SERVER or not owner then return end
@@ -590,4 +536,131 @@ function SWEP:CalculateManaCost(ent, only_shot)
     if not only_shot then mana_cost = mana_cost + self.Secondary.Mana end
 
     return mana_cost
+end
+
+
+
+
+
+if CLIENT then
+    local TryT = LANG.TryTranslation
+	local ParT = LANG.GetParamTranslation
+
+    local function drawOutline()
+        local ply = LocalPlayer()
+
+        if not IsValid(ply) or not ply:Alive() or ply:IsSpec() then return end
+        if ply:GetSubRole() ~= ROLE_STALKER or not ply:GetNWBool("ttt2_hd_stalker_mode", false) then return end
+
+        local wep = ply:GetActiveWeapon()
+
+        if wep:GetClass() ~= "weapon_ttt_slk_tele" or ply:GetNWBool("ttt2_slk_tele_active") then
+            --print("Tele is aktive:")
+        return end
+
+        if IsValid(ply.HighlightObject) then
+            if not ply:GetManaCost() then return end
+            
+            local clr
+            if ply:GetMana() < ply:GetManaCost() then
+                clr = Color(255, 0, 0)
+            else
+                clr = Color(0, 255, 0)
+            end
+
+            outline.Add(ply.HighlightObject, clr, OUTLINE_MODE_VISIBLE)
+            --halo.Add({ ply.HighlightObject }, clr, 0, 0, 3, true, true)
+        end
+    end
+
+    local function changeTargetID(ent, distance)
+        if IsValid(ent) and distance < 300 then return end
+
+        local ply = LocalPlayer()
+
+        if not IsValid(ply) or not ply:Alive() or ply:IsSpec() then return end
+        if ply:GetSubRole() ~= ROLE_STALKER or not ply:GetNWBool("ttt2_hd_stalker_mode", false) then return end
+
+        local wep = ply:GetActiveWeapon()
+
+        if wep:GetClass() ~= "weapon_ttt_slk_tele" or ply:GetNWBool("ttt2_slk_tele_active") then return end
+
+        if not IsValid(ply.HighlightObject) then return end
+
+        return ply.HighlightObject
+
+    end
+
+    local function drawTargetID(tData)
+        local ply = LocalPlayer()
+
+        if not IsValid(ply) or not ply:Alive() or ply:IsSpec() then return end
+        if ply:GetSubRole() ~= ROLE_STALKER or not ply:GetNWBool("ttt2_hd_stalker_mode", false) then return end
+
+        local wep = ply:GetActiveWeapon()
+
+        if wep:GetClass() ~= "weapon_ttt_slk_tele" or ply:GetNWBool("ttt2_slk_tele_active") then return end
+
+        if not IsValid(ply.HighlightObject) then return end
+
+        local ent = tData:GetEntity()
+
+        if not IsValid(ent) or ent ~= ply.HighlightObject then return end
+
+        tData:EnableText()
+
+        -- TODO: Less Hardcoding
+        local name = (ply.HighlightObject.AmmoType and ply.HighlightObject.AmmoType .. TryT("weapon_ttt_slk_tele_target_ammo")) or ply.HighlightObject.PrintName or (ply.HighlightObject:IsRagdoll() and "Ragdoll") or "weapon_ttt_slk_tele_target_prop"
+
+        tData:SetTitle( TryT("weapon_ttt_slk_tele_target_title") )
+        tData:SetSubtitle( ParT("weapon_ttt_slk_tele_target_name", {name = TryT(name) or ""}) )
+        tData:SetKeyBinding("+attack2")
+        tData:AddDescriptionLine( TryT("weapon_ttt_slk_tele_target_desc") )
+
+        tData:AddDescriptionLine(
+            ParT("weapon_ttt_slk_tele_target_mana", {mana = ply:GetManaCost()}),
+            COLOR_ORANGE
+        )
+
+    end
+
+    local function setNewHighlightObject(cmd)
+        local ply = LocalPlayer()
+
+        if not IsValid(ply) or not ply:Alive() or ply:IsSpec() then return end
+        if ply:GetSubRole() ~= ROLE_STALKER then return end
+        if ply:GetActiveWeapon():GetClass() ~= "weapon_ttt_slk_tele" or ply:GetNWBool("ttt2_slk_tele_active") then return end
+        
+        if cmd:GetForwardMove() ~= 0 or cmd:GetSideMove() ~= 0 or cmd:GetMouseX() ~= 0 or cmd:GetMouseY() ~= 0 then
+            ply.FindNewHighlightObject = true
+        else
+            ply.FindNewHighlightObject = false
+        end
+    end
+
+    function SWEP:Deploy()
+        --if SERVER then return true end
+        hook.Add("PreDrawHalos", "Stalker:HighlightTeleObjects", drawOutline)
+        -- Clear Highlight Object, so the Player needs to look for it again
+        hook.Add("CreateMove", "Stalker:RemoveHighlightObject", setNewHighlightObject)
+
+        hook.Add("TTTModifyTargetedEntity", "Stalker:ChangeTargetIDTele", changeTargetID)
+        hook.Add("TTTRenderEntityInfo", "Stalker:DrawTargetIDTele", drawTargetID)
+        return true
+    end
+
+    function SWEP:Holster()
+        --if SERVER then return true end
+        hook.Remove("PreDrawHalos", "Stalker:HighlightTeleObjects")
+        -- Clear Highlight Object, so the Player needs to look for it again
+        hook.Remove("CreateMove", "Stalker:RemoveHighlightObject")
+
+        hook.Remove("TTTModifyTargetedEntity", "Stalker:ChangeTargetIDTele")
+        hook.Remove("TTTRenderEntityInfo", "Stalker:DrawTargetIDTele")
+        return true
+    end
+
+    function SWEP:DrawHUD()
+        self:DrawHelp()
+    end
 end

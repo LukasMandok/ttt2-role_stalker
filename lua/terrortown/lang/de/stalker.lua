@@ -5,7 +5,8 @@ L[STALKER.name] = "Stalker"
 L[STALKER.defaultTeam] = "Team Stalker"
 L["hilite_win_" .. STALKER.defaultTeam] = "Die Stalker gewinnen"
 L["info_popup_" .. STALKER.name] = [[Du bist der Stalker! 
-Drücke Nachladen, um dich dauerhauft zu verwandeln und mit dem Töten zu beginnen.]]
+Drücke Nachladen, um dich dauerhauft zu verwandeln und mit dem Töten zu beginnen.
+Drücke Nachladen, um deinen Mana-Pool wieder aufzuladen. Sei aber vorsichtig, du verlierst dabei deine Tarnung.]]
 L["body_found_" .. STALKER.abbr] = "Es war ein Stalker!"
 L["search_role_" .. STALKER.abbr] = "Diese Person war ein Stalker!"
 L["target_" .. STALKER.name] = "Stalker"
@@ -28,6 +29,23 @@ L["weapon_ttt_slk_scream_desc"] = "Schreie, um deine Gegner vor dir zu betäuben
 L["item_ttt_slk_lifesteal_desc"] = "Erhalbe Lebenspunkte zurück, wenn du Gegner mit deinen Krallen angreifst."
 L["item_ttt_slk_mana_upgrade_desc"] = "Erweitere deinen Mana Vorrat um 100."
 L["item_ttt_slk_mobility_desc"] = "Erhöht die Beweglichkeit, indem es dir ermöglicht, sehr große Sprünge auszuführen und Wände zu erklimmen."
+
+-- HelpHUD
+L["weapon_ttt_slk_tele_help_pri"] = "Schleudere das Objekt auf dein anvisiertes Ziel."
+L["weapon_ttt_slk_tele_help_sec"] = "Starte Telekinese für ein Objekt."
+
+L["weapon_ttt_slk_scream_help_pri"] = "Schreiattacke ausführen."
+
+L["weapon_ttt_slk_claws_help_pri"] = "Greife mit deinen Krallen an."
+L["weapon_ttt_slk_claws_help_sec"] = "Stoße dein Ziel von dir weg."
+
+-- TargetID
+L["weapon_ttt_slk_tele_target_title"] = "Telekinese"
+L["weapon_ttt_slk_tele_target_name"] = "Objekt: {name}"
+L["weapon_ttt_slk_tele_target_desc"] = "Starte Telekinese für dieses Obejekt."
+L["weapon_ttt_slk_tele_target_mana"] = "Mana kosten: {mana}"
+L["weapon_ttt_slk_tele_target_ammo"] = "Munition"
+L["weapon_ttt_slk_tele_target_prop"] = "Gegenstand"
 
 --EPOP
 L["slk_epop_title"] = "{nick} ist der Stalker!"

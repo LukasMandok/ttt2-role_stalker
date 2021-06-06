@@ -88,6 +88,9 @@ end
 function SWEP:Initialize()
     --print("SCream Initialize")
     self:SetWeaponHoldType(self.HoldType)
+    if CLIENT then
+        self:AddTTT2HUDHelp("weapon_ttt_slk_scream_help_pri")
+    end
 end
 
 function SWEP:Deploy()
@@ -232,3 +235,9 @@ hook.Add("TTTPlayerSpeedModifier", "StalkerScreamTargetSlow", function(ply, _, _
     speedMod[1] = speedMod[1] * 0.6
 end)
     
+
+if CLIENT then
+    function SWEP:DrawHUD()
+		self:DrawHelp()    
+    end
+end
