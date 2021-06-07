@@ -204,13 +204,13 @@ function SWEP:Scream()
             local ed = EffectData()
             --ed:SetOrigin( ply:GetPos() )
             ed:SetEntity( ply )
-            print("Apply effect to:", ply:Nick())
+            --print("Apply effect to:", ply:Nick())
             util.Effect( "effect_ttt_slk_scream", ed, true, true )
         end
     end
 
     timer.Simple(self.Duration, function()
-        print("Deactivate Scream Stun")
+        --print("Deactivate Scream Stun")
         for _,ply in pairs(player.GetAll()) do
             if not IsValid(ply) or not ply:IsPlayer() then continue end
             ply:SetNWBool("ttt2_slk_scream_stun", false)

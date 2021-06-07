@@ -108,11 +108,11 @@ function SWEP:SendViewModelAnim( act , index , rate )
     if ( not game.SinglePlayer() and not IsFirstTimePredicted() ) then return end
 
     local vm = self:GetOwner():GetViewModel( index )
-    print("vm:", vm)
+    --("vm:", vm)
     if ( not IsValid( vm ) ) then return end
 
     local seq = vm:SelectWeightedSequence( act )
-    print("seq:", seq)
+    --print("seq:", seq)
     if ( seq == -1 ) then return end
 
     vm:SendViewModelMatchingSequence( seq )

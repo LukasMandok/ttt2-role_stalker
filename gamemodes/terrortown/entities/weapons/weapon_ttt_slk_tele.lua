@@ -94,14 +94,14 @@ local plymeta = FindMetaTable("Player")
 -- Initialize TeleEntities
 
 local function createTeleEntry(ent)
-    print("add:", ent:GetClass())
+    --print("add:", ent:GetClass())
     return { ["Mass"]  = nil,
              ["Class"] = ent:GetClass(),
              ["Ent"]   = ent}
 end
 
 function SWEP:InitializeTeleEnts()
-    print("Initialize Tele Ents")
+    --print("Initialize Tele Ents")
     self.TeleEnts = {}
 
     for i,ent in ipairs(ents.GetAll()) do
@@ -167,7 +167,7 @@ function SWEP:Initialize()
     -- if SERVER
     else
         net.Receive("RequestMassList", function(len, ply)
-            print("requested physics list")
+            --print("requested physics list")
             local masses = {}
             for index, entry in pairs(self.TeleEnts) do
                 local ent = entry.Ent
@@ -367,7 +367,7 @@ function SWEP:CreateTeleProp(ent)
         end
         psy:SetPhysMat(phys:GetMaterial())
     else
-        print("!!!! no physics Object available", ent:GetClass())
+        --print("!!!! no physics Object available", ent:GetClass())
         psy:SetMass()
     end
 
@@ -493,7 +493,7 @@ function SWEP:FindTeleObject(spos, sdest)
     tbl = ents.FindInSphere(tr.HitPos, dist)
 
     for k, ent in pairs(tbl) do
-        print("test:", ent:GetClass(), ent)
+        --print("test:", ent:GetClass(), ent)
         if not self.TeleEnts[ent:EntIndex()] and ent:IsRagdoll() then continue end--if ent:GetClass() ~= "prop_physics" and ent:GetClass() ~= "prop_ragdoll" and not string.find(ent:GetClass(), "item_ammo") then continue end -- and not string.find(ent:GetClass(), "item_ammo")
 
         local phys = ent:GetPhysicsObject()

@@ -181,7 +181,7 @@ function ENT:OnRemove()
 
     if IsValid(par) then
         if self.PsyOnly then
-            print("RemoveParent", par:GetParent(), par:GetMoveParent())
+            --print("RemoveParent", par:GetParent(), par:GetMoveParent())
             par:SetParent()
             par:SetPos( self:GetPos() )
             par:SetAngles( self:GetAngles() )
