@@ -86,15 +86,15 @@ function ITEM:DashJump(owner)
         owner:SetVelocity(jump)
         owner:EmitSound("npc/fast_zombie/foot3.wav", 40, math.random(90, 110))
         self:SetNextJump(owner)
-    else
-        local tr = util.TraceLine(util.GetPlayerTrace(owner))
+    -- else
+    --     local tr = util.TraceLine(util.GetPlayerTrace(owner))
 
-        if tr.HitPos:Distance(owner:GetShootPos()) < 50 and not owner:OnGround() then
-            owner:SetLocalVelocity(Vector(0, 0, 0))
-            owner:SetMoveType(MOVETYPE_NONE)
-        elseif owner:GetMoveType() == MOVETYPE_NONE then
-            owner:SetMoveType(MOVETYPE_WALK)
-            owner:SetLocalVelocity(owner:GetAimVector() * 500)
-        end
+    --     if tr.HitPos:Distance(owner:GetShootPos()) < 50 and not owner:OnGround() then
+    --         owner:SetLocalVelocity(Vector(0, 0, 0))
+    --         owner:SetMoveType(MOVETYPE_NONE)
+    --     elseif owner:GetMoveType() == MOVETYPE_NONE then
+    --         owner:SetMoveType(MOVETYPE_WALK)
+    --         owner:SetLocalVelocity(owner:GetAimVector() * 500)
+    --     end
     end
 end
