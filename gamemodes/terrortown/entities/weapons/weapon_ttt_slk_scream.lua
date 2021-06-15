@@ -11,7 +11,7 @@ if SERVER then
     SWEP.AutoSwitchFrom = false
 
     resource.AddFile("materials/vgiu/ttt/icon_slk_scream")
-    resource.AddFile("materials/vgui/ttt/hud_icon_slk_scream") --.png
+    resource.AddFile("materials/vgui/ttt/hud/hud_icon_slk_scream") --.png
 end
 
 if CLIENT then
