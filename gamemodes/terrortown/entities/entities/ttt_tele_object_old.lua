@@ -279,7 +279,7 @@ if CLIENT then
     ENT.RenderGroup = RENDERGROUP_TRANSLUCENT
 
     function ENT:Initialize()
-        print("Init Clientside")
+        --print("Init Clientside")
         self:SetRenderMode(RENDERMODE_TRANSALPHA)
     end
 
@@ -322,7 +322,7 @@ if CLIENT then
     local matLight = Material("models/spawn_effect2")
 
     function ENT:DrawTranslucent()
-        print("Draw entity")
+        --print("Draw entity")
         local eyenorm = self:GetPos() - EyePos()
         local dist = eyenorm:Length()
         eyenorm:Normalize()

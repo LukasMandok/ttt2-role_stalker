@@ -19,7 +19,7 @@ function EFFECT:Init(data)
     -- end
 
     if LocalPlayer() ~= data:GetEntity() or not LocalPlayer():Alive() or LocalPlayer():IsSpec() or LocalPlayer():Team() == TEAM_STALKER then 
-        print("does not affect", LocalPlayer():Nick())
+        --print("does not affect", LocalPlayer():Nick())
         self:Remove()
         return
     end
@@ -29,14 +29,14 @@ end
 
 function EFFECT:Think( )
     self:SetPos(LocalPlayer():GetPos())
-    print("Think:", self.StartTime and self.StartTime + self.Duration > CurTime() or false)
+    --print("Think:", self.StartTime and self.StartTime + self.Duration > CurTime() or false)
 
     return self.StartTime and self.StartTime + self.Duration > CurTime() or false
     --LocalPlayer():GetNWBool("ttt2_slk_scream_stun")
 end
 
 function EFFECT:Render()
-    print("Render Effect")
+    --print("Render Effect")
     local add = 0.2
     local draw = 1
     local delay = 0.01
