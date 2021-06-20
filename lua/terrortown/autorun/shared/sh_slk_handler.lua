@@ -210,13 +210,17 @@ if SERVER then
     -- using hook("ScalePlayerDamage") of hidden
 
     hook.Add("DoPlayerDeath", "TTT2StalkerDied", function(ply, attacker, dmgInfo)
-        if ply:GetSubRole() ~= ROLE_STALKER or not ply:GetNWBool("ttt2_hd_stalker_mode", false) then return end
+        if ply:GetSubRole() == ROLE_STALKER and ply:GetNWBool("ttt2_hd_stalker_mode", false) then
 
-        ply:SetStalkerMode_slk(false)
-        -- events.Trigger(EVENT_HDN_DEFEAT, ply, attacker, dmgInfo)
-        net.Start("ttt2_slk_epop_defeat")
-        net.WriteString(ply:Nick())
-        net.Broadcast()
+            ply:SetStalkerMode_slk(false)
+            -- events.Trigger(EVENT_HDN_DEFEAT, ply, attacker, dmgInfo)
+            net.Start("ttt2_slk_epop_defeat")
+            net.WriteString(ply:Nick())
+            net.Broadcast()
+
+        elseif attacker:GetSubRole() == ROLE_STALKER and attacker:GetNWBool("ttt2_hd_stalker_mode", false) and not ply:IsInTeam(attacker) then
+            attacker:AddCredits(1)
+        end
     end)
 
     -- using hook("PlayerSPawn") of hidden

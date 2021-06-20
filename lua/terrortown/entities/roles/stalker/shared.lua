@@ -23,8 +23,8 @@ function ROLE:PreInitialize()
     self.score.teamKillsMultiplier = -16
     self.score.bodyFoundMuliplier = 0
 
-    self.traitorCreditAward = true
-    self.preventKillCredits = false
+    self.traitorCreditAward = false
+    self.preventKillCredits = true
     self.preventFindCredits = true
 
     self.fallbackTable = {} -- = {items.GetStored("weapon_ttt_slk_tele"),
@@ -43,8 +43,8 @@ function ROLE:PreInitialize()
         credits = 2,
         togglable = true,
         random = 20,
-        traitorKill = 1,
-        creditsTraitorKill = 1,
+        traitorKill = 0,
+        creditsTraitorKill = 0,
         --creditsTraitorDead = 1,
         shopFallback = SHOP_UNSET -- SHOP_FALLBACK_STALKER -- SHOP_UNSET
     }
@@ -103,8 +103,8 @@ if SERVER then
                 ply:SetStalkerMode_slk(true)
                 STATUS:AddStatus(ply, "ttt2_hdn_invisbility")
                 ply:GiveEquipmentWeapon("weapon_ttt_slk_claws")
-                ply:GiveEquipmentWeapon("weapon_ttt_slk_tele")
-                ply:GiveEquipmentWeapon("weapon_ttt_slk_scream")
+                --ply:GiveEquipmentWeapon("weapon_ttt_slk_tele")
+                --ply:GiveEquipmentWeapon("weapon_ttt_slk_scream")
 
             elseif ply:GetNWBool("ttt2_slk_regenerate_mode", false) == false then
                 ply:SetRegenerateMode(true)
