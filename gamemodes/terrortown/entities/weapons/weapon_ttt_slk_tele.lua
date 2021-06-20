@@ -78,6 +78,7 @@ SWEP.Secondary.Mana         = 25
 
 -- TTT2 related
 SWEP.MaxDistance        = 250
+SWEP.FindObjectDistance = 75
 SWEP.AllowDrop          = false
 SWEP.IsSilent           = true
 
@@ -203,10 +204,7 @@ function SWEP:Think()
 
         -- On Client Side, if 
         if CLIENT and owner.FindNewHighlightObject then
-            local spos  = owner:GetShootPos()
-            local sdest = spos + (owner:GetAimVector() * self.MaxDistance)
-
-            owner.HighlightObject = self:FindTeleObject(spos, sdest)
+            owner.HighlightObject = self:FindTeleObject()
 
             if IsValid(owner.HighlightObject) then
                 --print("Add highlight for:", owner.HighlightObject:GetClass(), "with Mass:", owner.HighlightObject.Mass)
@@ -311,7 +309,6 @@ function SWEP:CanTele(ent, phys)
     -- TODO: Test for Mana
     -- return canTele, enoughMana
 
-    print(self.TeleEnts)
 
     if (self.TeleEnts[ent:EntIndex()] or ent:IsRagdoll() ) and not IsValid(ent:GetParent()) and not IsValid(ent:GetOwner()) then
         if SERVER then
@@ -401,10 +398,7 @@ function SWEP:StartTele()
     local owner = self:GetOwner()
     -- create Trace in the direction the player is looking in. 
     -- restrict distance to self.MaxDistance
-    local spos = owner:GetShootPos()
-    local sdest = spos + (owner:GetAimVector() * self.MaxDistance)
-
-    local ent = self:FindTeleObject(spos, sdest)
+    local ent = self:FindTeleObject()
 
     if IsValid(ent) and owner:GetMana() >= self:CalculateManaCost(ent) then
         if SERVER then
@@ -422,12 +416,16 @@ end
 
 
 
-function SWEP:FindTeleObject(spos, sdest)
+function SWEP:FindTeleObject()
+    local owner = self:GetOwner()
+    local spos  = owner:GetShootPos()
+    local sdest = spos + (owner:GetAimVector() * self.MaxDistance)
+
     --filter = table.insert(filter, self)
     local tr = util.TraceLine({
         start = spos,
         endpos = sdest,
-        filter = self:GetOwner(),
+        filter = owner,
         mask = MASK_SHOT_HULL,
     })
 
@@ -488,22 +486,30 @@ function SWEP:FindTeleObject(spos, sdest)
     -- end
 
     -- FindInSphere
-    local dist = 75
+    local dist = self.FindObjectDistance
     local sel_ent
     tbl = ents.FindInSphere(tr.HitPos, dist)
 
     for k, ent in pairs(tbl) do
         --print("test:", ent:GetClass(), ent)
-        if not self.TeleEnts[ent:EntIndex()] and ent:IsRagdoll() then continue end--if ent:GetClass() ~= "prop_physics" and ent:GetClass() ~= "prop_ragdoll" and not string.find(ent:GetClass(), "item_ammo") then continue end -- and not string.find(ent:GetClass(), "item_ammo")
+        if not (self.TeleEnts[ent:EntIndex()] or ent:IsRagdoll()) then continue end--if ent:GetClass() ~= "prop_physics" and ent:GetClass() ~= "prop_ragdoll" and not string.find(ent:GetClass(), "item_ammo") then continue end -- and not string.find(ent:GetClass(), "item_ammo")
 
-        local phys = ent:GetPhysicsObject()
+        if SERVER then
+            local phys = ent:GetPhysicsObject()
 
-        -- HitPos is EndPos if trace hit nothing
-        --print("distance:", ent:GetPos():Distance(tr.HitPos))
-        if ent:GetPos():DistToSqr(tr.HitPos) < dist^2 and not IsValid(ent:GetParent()) and self:CanTele(ent, phys) then
-            sel_ent = ent
-            --print("found entity:", sel_ent:GetClass())
-            dist = ent:GetPos():Distance(tr.HitPos)
+            -- HitPos is EndPos if trace hit nothing
+            --print("distance:", ent:GetPos():Distance(tr.HitPos))
+            if ent:GetPos():DistToSqr(tr.HitPos) < dist^2 and self:CanTele(ent, phys) then
+                sel_ent = ent
+                --print("found entity:", sel_ent:GetClass())
+                dist = ent:GetPos():Distance(tr.HitPos)
+            end
+        else
+            if ent:GetPos():DistToSqr(tr.HitPos) < dist^2 and self:CanTele(ent) then
+                sel_ent = ent
+                --print("found entity:", sel_ent:GetClass())
+                dist = ent:GetPos():Distance(tr.HitPos)
+            end
         end
     end
 

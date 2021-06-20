@@ -2,7 +2,7 @@ if SERVER then
     AddCSLuaFile()
 
     resource.AddFile("materials/vgiu/ttt/icon_slk_mana_upgrade")
-    resource.AddFile("materials/vgui/ttt/hud_icon_slk_mana_upgrade") --.png
+    resource.AddFile("materials/vgui/ttt/hud/hud_icon_slk_mana_upgrade.png")
 end
 
 ITEM.EquipMenuData = {
@@ -22,7 +22,7 @@ ITEM.ManaUpgrade = 50
 
 if CLIENT then
     ITEM.material = "vgui/ttt/icon_slk_mana_upgrade"
-    ITEM.hud      = Material("vgui/ttt/hud_icon_slk_mana_upgrade")  --.png
+    ITEM.hud      = Material("vgui/ttt/hud/hud_icon_slk_mana_upgrade.png")  --.png
 end
 
 function ITEM:Initialize()

@@ -43,13 +43,13 @@ SWEP.Primary.ClipSize      = -1
 SWEP.Primary.DefaultClip   = -1
 SWEP.Primary.Ammo          = "none"
 
-SWEP.Primary.Sound		   = Sound( "weapons/knife/knife_slash2.wav" )
-SWEP.Primary.Hit           = Sound( "npc/fast_zombie/claw_strike3.wav" )
+SWEP.Primary.MissSound	   = Sound( "weapons/knife/knife_slash2.wav" )
+SWEP.Primary.HitSound      = Sound( "npc/fast_zombie/claw_strike3.wav" )
 
 
 -- SECONDARY: Claws Push
 SWEP.Secondary.Damage      = 10
-SWEP.Secondary.HitForce    = 4000
+SWEP.Secondary.HitForce    = 6000
 SWEP.Secondary.ClipSize    = -1
 SWEP.Secondary.DefaultClip = -1
 SWEP.Secondary.Automatic   = false
@@ -150,7 +150,7 @@ function SWEP:PrimaryAttack()
 
         --print("target:", tgt, "pos:", spos, "destination:", sdest, "trace:", trace)
 
-        if IsValid(tgt) and (tgt:IsPlayer() or tgt:GetClass() == "prop_ragdoll") then
+        if IsValid(tgt) and (tgt:IsPlayer() or tgt:IsRagdoll()) then
 
             --self:SendWeaponAnim(ACT_VM_MISSCENTER)
 
@@ -163,7 +163,7 @@ function SWEP:PrimaryAttack()
             self:SendViewModelAnim( ACT_VM_PRIMARYATTACK , 0 )
             owner:SetAnimation(PLAYER_ATTACK1)
 
-            tgt:EmitSound( self.Primary.Hit, 100, math.random(90,110) )
+            tgt:EmitSound( self.Primary.HitSound, 100, math.random(90,110) )
             --self:SendWeaponAnim(ACT_VM_MISSCENTER)
 
             util.Effect("BloodImpact", eData)
@@ -174,7 +174,7 @@ function SWEP:PrimaryAttack()
             owner:SetAnimation(PLAYER_ATTACK1)
 
             -- TODO: keine Ahnung
-            owner:EmitSound( self.Primary.Sound, 100, math.random(80,100) )
+            owner:EmitSound( self.Primary.MissSound, 100, math.random(80,100) )
         end
 
         -- TODO: Warum brauche ich das?
@@ -220,7 +220,7 @@ function SWEP:SecondaryAttack()
             self:PushObject(tgt, trace, self.Secondary.HitForce)
             -- if tgt:IsPlayer()
 
-            -- elseif tgt:GetClass() == "prop_ragdoll" then
+            -- elseif tgt:IsRagdoll() then
             --     owner:SetAnimation(PLAYER_ATTACK1)
 
             --     self:SendWeaponAnim( ACT_VM_HITCENTER )
@@ -295,22 +295,19 @@ function SWEP:DealDamage(damage, tgt, trace, spos, sdest, primary)
 
     local owner = self:GetOwner()
 
-    if tgt:IsPlayer() then
-            local dmg = DamageInfo()
-            dmg:SetDamage(damage)
-            dmg:SetAttacker(owner)
-            dmg:SetInflictor(self)
-            dmg:SetDamageForce(owner:GetAimVector() * 5)
-            dmg:SetDamagePosition(owner:GetPos())
-            dmg:SetDamageType(DMG_SLASH)
+    local dmg = DamageInfo()
+    dmg:SetDamage(damage)
+    dmg:SetAttacker(owner)
+    dmg:SetInflictor(self)
+    dmg:SetDamageForce(owner:GetAimVector() * 5)
+    dmg:SetDamagePosition(owner:GetPos())
+    dmg:SetDamageType(DMG_SLASH)
 
-            hook.Run("ttt_slk_claws_hit", owner, tgt, damage, primary)
-
-            tgt:DispatchTraceAttack(dmg, spos + (owner:GetAimVector() * 3), sdest)
-
-    elseif tgt:GetClass() == "prop_ragdoll" then
+    if tgt:IsPlayer() or tgt:IsRagdoll() then
         hook.Run("ttt_slk_claws_hit", owner, tgt, damage, primary)
     end
+
+    tgt:DispatchTraceAttack(dmg, spos + (owner:GetAimVector() * 3), sdest)
 end
 
 function SWEP:Murder(trace, spos, sdest)
@@ -401,7 +398,7 @@ function SWEP:PushObject(tgt, trace, force) -- phys, pdir, maxforce, is_ragdol
     local phys = tgt:GetPhysicsObject()
 
     if IsValid(phys) and not tgt:IsPlayer()     then
-        local mass = math.log(math.Clamp(phys:GetMass(), 1, 1000))
+        local mass = math.log(math.Clamp(phys:GetMass(), 10, 1000))
         --print("Phys Object has mass:", mass)
 
         local pushvel = dir * force / mass

@@ -171,7 +171,7 @@ end
 function SWEP:Scream()
     local owner = self:GetOwner()
 
-    owner:EmitSound( self.Primary.Scream, 80, 90 )
+    owner:EmitSound( self.Primary.Scream, 75, 90 )
 
     --TODO: Create Blast effect
     local blast = EffectData()

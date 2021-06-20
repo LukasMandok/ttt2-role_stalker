@@ -6,15 +6,13 @@ if SERVER then
     resource.AddFile("materials/vgui/ttt/dynamic/roles/icon_slk.vmt")
 end
 
--- TODO: Implement Mana instead of Ammunition
-
 roles.InitCustomTeam(ROLE.name, {
     icon = "vgui/ttt/dynamic/roles/icon_slk",
     color = Color(0, 49, 82, 255)
 })
 
 function ROLE:PreInitialize()
-    --roles.SetBaseRole(self, ROLE_HIDDEN)
+    roles.SetBaseRole(self, ROLE_HIDDEN)
 
     self.color = Color(0, 49, 82, 255)
 
@@ -26,6 +24,7 @@ function ROLE:PreInitialize()
     self.score.bodyFoundMuliplier = 0
 
     self.traitorCreditAward = true
+    self.preventKillCredits = false
     self.preventFindCredits = true
 
     self.fallbackTable = {} -- = {items.GetStored("weapon_ttt_slk_tele"),
@@ -55,14 +54,11 @@ function ROLE:PreInitialize()
 end
 
 function ROLE:Initialize()
-    roles.SetBaseRole(self, ROLE_HIDDEN)
+    --roles.SetBaseRole(self, ROLE_HIDDEN)
     --RunConsoleCommand("ttt_" .. self.abbr .. "_shop_fallback", SHOP_FALLBACK_STALKER)
 
     if SERVER and JESTER then
         self.networkRoles = {JESTER}
-    elseif CLIENT then
-        --print("\n\n\n Hier könnte der EquipmentTable gelöscht werden")
-        --Equipment[ROLE_STALKER] = nil
     end
 end
 
