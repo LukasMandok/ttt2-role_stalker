@@ -525,7 +525,7 @@ function SWEP:CalculateManaCost(ent, only_shot)
     local mass = ent.Mass
 
     if not mass then
-        if ent:IsRagdoll() then
+        if not ent:IsRagdoll() then
             local phys = ent:GetPhysicsObject()
             if IsValid(phys) then
                 mass = phys:GetMass()
@@ -537,11 +537,13 @@ function SWEP:CalculateManaCost(ent, only_shot)
         end
     end
 
+    --print("Mass = " .. tostring(mass), "ent:", ent)
+
     local mana_cost =  math.Clamp(mass / 3, self.Primary.ManaMin, self.Primary.ManaMax)
 
     if not only_shot then mana_cost = mana_cost + self.Secondary.Mana end
 
-    return mana_cost
+    return math.Round(mana_cost)
 end
 
 

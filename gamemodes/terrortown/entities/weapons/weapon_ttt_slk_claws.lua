@@ -107,6 +107,8 @@ end
 function SWEP:SendViewModelAnim( act , index , rate )
     if ( not game.SinglePlayer() and not IsFirstTimePredicted() ) then return end
 
+    if not isfunction(self:GetOwner().GetViewModel) then return end
+
     local vm = self:GetOwner():GetViewModel( index )
     --("vm:", vm)
     if ( not IsValid( vm ) ) then return end

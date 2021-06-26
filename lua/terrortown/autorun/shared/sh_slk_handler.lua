@@ -210,6 +210,8 @@ if SERVER then
     -- using hook("ScalePlayerDamage") of hidden
 
     hook.Add("DoPlayerDeath", "TTT2StalkerDied", function(ply, attacker, dmgInfo)
+        if not IsValid(ply) or not IsValid(attacker) or ply:IsSpec() or attacker:IsSpec() then return end
+        
         if ply:GetSubRole() == ROLE_STALKER and ply:GetNWBool("ttt2_hd_stalker_mode", false) then
 
             ply:SetStalkerMode_slk(false)
