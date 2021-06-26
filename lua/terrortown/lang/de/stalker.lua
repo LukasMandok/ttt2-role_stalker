@@ -6,7 +6,8 @@ L[STALKER.defaultTeam] = "Team Stalker"
 L["hilite_win_" .. STALKER.defaultTeam] = "Die Stalker gewinnen"
 L["info_popup_" .. STALKER.name] = [[Du bist der Stalker! 
 Drücke Nachladen, um dich dauerhauft zu verwandeln und mit dem Töten zu beginnen.
-Drücke Nachladen, um deinen Mana-Pool wieder aufzuladen. Sei aber vorsichtig, du verlierst dabei deine Tarnung.]]
+Drücke Nachladen, um deinen Mana-Pool wieder aufzuladen. Sei aber vorsichtig, du verlierst dabei deine Tarnung.
+Verwende den Shop, um deine Fähigkeiten zu erweitern.]]
 L["body_found_" .. STALKER.abbr] = "Es war ein Stalker!"
 L["search_role_" .. STALKER.abbr] = "Diese Person war ein Stalker!"
 L["target_" .. STALKER.name] = "Stalker"

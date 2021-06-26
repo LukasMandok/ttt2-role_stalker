@@ -6,7 +6,8 @@ L[STALKER.defaultTeam] = "Team Stalker"
 L["hilite_win_" .. STALKER.defaultTeam] = "Team Stalkers Win"
 L["info_popup_" .. STALKER.name] = [[You are the Stalker! 
 Press Reload to transform permanently and begin killing.
-Press Reload to recharge your mana pool, be carefull while doing so. It will reduce your cloak.]]
+Press Reload to recharge your mana pool, be carefull while doing so. It will reduce your cloak.
+Use the shop to enhance your abilities.]]
 L["body_found_" .. STALKER.abbr] = "They were a Stalker!"
 L["search_role_" .. STALKER.abbr] = "This person was a Stalker!"
 L["target_" .. STALKER.name] = "Stalker"
