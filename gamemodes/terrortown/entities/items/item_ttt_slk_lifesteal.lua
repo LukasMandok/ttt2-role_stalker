@@ -2,7 +2,6 @@ if SERVER then
     AddCSLuaFile()
 
     resource.AddFile("materials/vgiu/ttt/icon_slk_lifesteal")
-    --resource.AddFile("materials/vgui/ttt/hud/hud_icon_slk_lifesteal.png")
     resource.AddFile("materials/vgui/ttt/hud/hud_icon_slk_lifesteal.vmt")
 end
 
@@ -28,13 +27,9 @@ ITEM.RegenTime       = 2
 ITEM.RegenTimeCorpse = 5
 ITEM.Mana            = 10
 
--- hook.Add("PostInitPostEntity", "Intiaialize_item_ttt_slk_lifesteal", function()
---     AddToShopFallback(STALKER.fallbackTable, ROLE_STALKER, ITEM)
--- end)
 
 function ITEM:Initialize()
     AddToShopFallback(STALKER.fallbackTable, ROLE_STALKER, self)
-
 end
 
 
@@ -54,7 +49,7 @@ if SERVER then
     function ITEM:Bought(owner)
         if owner:GetSubRole() ~= ROLE_STALKER or not owner:Alive() or owner:IsSpec() then return end
 
-        hook.Add("ttt_slk_claws_hit", "StalkerClawsLifesteal", function(ply, tgt, dmg, primary)
+        hook.Add("ttt_slk_claws_hit", "TTT2Stalker:ClawsLifesteal", function(ply, tgt, dmg, primary)
             if not ply:HasEquipmentItem(self.id) or ply:GetSubRole() ~= ROLE_STALKER or not ply:Alive() or ply:IsSpec() then return end
 
             if tgt:IsPlayer() and primary then
@@ -69,7 +64,7 @@ if SERVER then
     function ITEM:SetNextRegen(ply, time)
         local time = time or self.RegenTime
         ply.NextRegen = CurTime() + time
-        RECHARGE_STATUS:SetRecharge(ply, "ttt2_slk_lifesteal_recharge", time, true)
+        RECHARGE_STATUS:SetRechargeTimer(ply, "ttt2_slk_lifesteal_recharge", time, true)
     end
 
     -- Tests if the item can regenerate health
@@ -97,13 +92,13 @@ if SERVER then
     function ITEM:HitRagdoll(ply, tgt, dmg)
         if not self:CanRegen(ply) then return end
 
-        tgt.lifesteal_hits = tgt.lifesteal_hits or 1
+        tgt.stalkerLifestealHits = tgt.stalkerLifestealHits or 1
 
-        if tgt.lifesteal_hits >= 5 then return end
+        if tgt.stalkerLifestealHits >= 5 then return end
 
         ply:AddHealth(dmg * 0.4)
         self:SetNextRegen(ply, self.RegenTimeCorpse)
-        tgt.lifesteal_hits = tgt.lifesteal_hits + 1
+        tgt.stalkerLifestealHits = tgt.stalkerLifestealHits + 1
     end
 
 

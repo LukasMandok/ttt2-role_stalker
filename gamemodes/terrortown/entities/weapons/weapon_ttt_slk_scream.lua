@@ -72,21 +72,11 @@ SWEP.DeploySpeed = 2
 SWEP.Mana = 50
 SWEP.Duration = 5
 
---AddWeaponIntoFallbackTable(SWEP:GetClass(), STALKER)
-
--- hook.Add("PostInitPostEntity", "Intiaialize_weapon_ttt_slk_scream", function()
---     AddToShopFallback(STALKER.fallbackTable, ROLE_STALKER, SWEP)
---     --AddWeaponIntoFallbackTable(SWEP.id, STALKER)
--- end)
-
 function SWEP:ShopInit()
-    --print("Adding Scream to FallbackTable")
     AddToShopFallback(STALKER.fallbackTable, ROLE_STALKER, self)
-    --AddWeaponIntoFallbackTable(self.id, STALKER)
 end
 
 function SWEP:Initialize()
-    --print("SCream Initialize")
     self:SetWeaponHoldType(self.HoldType)
     if CLIENT then
         self:AddTTT2HUDHelp("weapon_ttt_slk_scream_help_pri")
@@ -114,10 +104,9 @@ end
 
 function SWEP:Think()
     local owner = self:GetOwner()
-    if not IsValid(owner) or owner:GetSubRole() ~= ROLE_STALKER or not owner:GetNWBool("ttt2_hd_stalker_mode", false) then return end
+    if not IsValid(owner) or owner:GetSubRole() ~= ROLE_STALKER or not owner:GetNWBool("ttt2_slk_stalker_mode", false) then return end
 
     if owner:GetMana() < self.Mana then
-        --print("Not enough mana", owner:GetMana(), self.Mana)
         self:SetClip1(0)
         owner:SetAmmo(0, self:GetPrimaryAmmoType())
     return end
@@ -125,20 +114,14 @@ function SWEP:Think()
     local ammo = math.Clamp(math.floor(self:GetOwner():GetMana() / self.Mana ) - self:Clip1(), 0, 10)
     owner:SetAmmo(ammo, self:GetPrimaryAmmoType())
 
-    if self:GetNextPrimaryFire() > CurTime() then
-        --print("NextPrimaryFire not ready")
-        --print("NextSecondaryFire not valid:", self:GetNextSecondaryFire())
-    return end
+    if self:GetNextPrimaryFire() > CurTime() then return end
 
-    --print("Reload Ammo:", ammo)
     self:SetClip1(1)
-    -- self:Reload()
-
 end
 
 function SWEP:SetNextFire(time)
     self:SetNextPrimaryFire(CurTime() + time)
-    RECHARGE_STATUS:SetRecharge(self:GetOwner(), "ttt2_slk_scream_recharge", time, true)
+    RECHARGE_STATUS:SetRechargeTimer(self:GetOwner(), "ttt2_slk_scream_recharge", time, true)
 end
 
 function SWEP:CanPrimaryAttack()
@@ -157,7 +140,7 @@ function SWEP:Reload() end
 function SWEP:PrimaryAttack()
 
     local owner = self:GetOwner()
-    if not IsValid(owner) or owner:GetSubRole() ~= ROLE_STALKER or not owner:GetNWBool("ttt2_hd_stalker_mode", false) then return end
+    if not IsValid(owner) or owner:GetSubRole() ~= ROLE_STALKER or not owner:GetNWBool("ttt2_slk_stalker_mode", false) then return end
 
     if not self:CanPrimaryAttack() then return end
 
@@ -166,13 +149,11 @@ function SWEP:PrimaryAttack()
     self:SetClip1(0)
     --owner:SetAmmo(owner:GetAmmoCount(self:GetPrimaryAmmoType()) - 1, self:GetPrimaryAmmoType())
 
-    --owner:LagCompensation(true)
     if self:Scream() and SERVER then
         owner:AddMana(-self.Mana)
     end
 
     return true
-    --owner:LagCompensation(false)
 end
 
 
@@ -225,19 +206,10 @@ function SWEP:Scream()
         end
     end)
 
-    -- local tbl = ents.FindByClass( "sent_tripmine" )
-    -- tbl = table.Add( tbl, ents.FindByClass( "sent_seeker" ) )
-
-    -- for k,v in pairs( tbl ) do
-    --     if v:GetPos():Distance( owner:GetPos() ) < 350 then
-    --         v:Malfunction()
-    --     end
-    -- end
-
     return true
 end
 
-hook.Add("TTTPlayerSpeedModifier", "StalkerScreamTargetSlow", function(ply, _, _, speedMod)
+hook.Add("TTTPlayerSpeedModifier", "TTT2Stalker:ScreamTargetSlow", function(ply, _, _, speedMod)
     if not ply:GetNWBool("ttt2_slk_scream_stun") then return end
 
     speedMod[1] = speedMod[1] * 0.6

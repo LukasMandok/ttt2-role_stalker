@@ -1,0 +1,7 @@
+"UnlitGeneric"
+{
+	"$basetexture" "vgui/ttt/hud/hud_icon_slk_cloak"
+	"$translucent" 1
+	"$vertexalpha" 1
+	"$vertexcolor" 1
+}

@@ -22,25 +22,26 @@ function RECHARGE_STATUS:AddStatus(id, active_icon)
     STATUS:AddStatus(id, active_icon)
 
 	self.active[id] = table.Copy(self.registered[id])
+    self.active[id].isRecharging = false 
     self:SetActiveIcon(id, active_icon or 1)
 
     if self.registered[id].displaytime and self.registered[id].displaytime > CurTime() then
-        self:SetRecharge(id, self.registered[id].displaytime - CurTime(), true)
+        self:SetRechargeTimer(id, self.registered[id].displaytime - CurTime(), true)
     end
 
 end
 
-function RECHARGE_STATUS:SetRecharge(id, duration, showDuration)
+function RECHARGE_STATUS:SetRechargeTimer(id, duration, showDuration)
     if self.active[id] == nil or duration <= 0 then return end
 
-    STATUS.active[id] = self.active[id].recharge
+    self:SetRecharge(id, true)
     STATUS.active[id].displaytime = CurTime() + duration
     self.registered[id].displaytime = CurTime() + duration
 
     timer.Create(id, duration, 1, function()
 		if not self then return end
 
-		STATUS.active[id] = self.active[id].ready
+		self:SetRecharge(id, false)
         self.registered[id].displaytime = nil
 	end)
 
@@ -49,6 +50,22 @@ function RECHARGE_STATUS:SetRecharge(id, duration, showDuration)
             return tostring(math.ceil(math.max(0, slf.displaytime - CurTime()))) 
         end
     end
+end
+
+function RECHARGE_STATUS:SetRecharge(id, bool)
+    if self.active[id] == nil then return end
+
+    if bool then
+        STATUS.active[id] = self.active[id].recharge
+        self.active[id].isRecharging = true
+    else
+        STATUS.active[id] = self.active[id].ready
+        self.active[id].isRecharging = false
+    end
+end
+
+function RECHARGE_STATUS:GetRecharge(id)
+    return self.active[id].isRecharging or false
 end
 
 function RECHARGE_STATUS:SetActiveIcon(id, active_icon)
@@ -82,8 +99,12 @@ net.Receive("ttt2_recharge_status_effect_add", function()
 	RECHARGE_STATUS:AddStatus(net.ReadString(), net.ReadUInt(8))
 end)
 
+net.Receive("ttt2_recharge_status_effect_timer", function()
+	RECHARGE_STATUS:SetRechargeTimer(net.ReadString(), net.ReadUInt(32), net.ReadBool())
+end)
+
 net.Receive("ttt2_recharge_status_effect_recharge", function()
-	RECHARGE_STATUS:SetRecharge(net.ReadString(), net.ReadUInt(32), net.ReadBool())
+	RECHARGE_STATUS:SetRecharge(net.ReadString(), net.ReadBool())
 end)
 
 net.Receive("ttt2_recharge_status_effect_set_id", function()

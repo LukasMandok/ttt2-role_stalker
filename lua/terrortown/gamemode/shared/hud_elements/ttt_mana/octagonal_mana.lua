@@ -60,7 +60,7 @@ if CLIENT then
 	function HUDELEMENT:ShouldDraw()
 		local client = LocalPlayer()
 
-		return HUDEditor.IsEditing or (client:IsActive() and client:Alive() and client:GetSubRole() == ROLE_STALKER and client:GetNWBool("ttt2_hd_stalker_mode", false))
+		return HUDEditor.IsEditing or (client:IsActive() and client:Alive() and client:GetSubRole() == ROLE_STALKER and client:GetNWBool("ttt2_slk_stalker_mode", false))
 		-- pure_skin: return IsValid(client) 
 		-- octagonal: return HUDEditor.IsEditing or client.drowningProgress and client:Alive() and client.drowningProgress ~= -1
 	end
@@ -126,7 +126,7 @@ end
 
 -- 		local client = LocalPlayer()
 
--- 		return HUDEditor.IsEditing or (client:IsActive() and client:Alive() and client:GetSubRole() == ROLE_STALKER and client:GetNWBool("ttt2_hd_stalker_mode", false))
+-- 		return HUDEditor.IsEditing or (client:IsActive() and client:Alive() and client:GetSubRole() == ROLE_STALKER and client:GetNWBool("ttt2_slk_stalker_mode", false))
 -- 	end
 
 -- 	function HUDELEMENT:Draw()

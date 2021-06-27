@@ -59,9 +59,9 @@ SWEP.notBuyable             = false
 -- PRIMARY: Tele Shot
 SWEP.Primary.Delay          = 1
 SWEP.Primary.Automatic      = false
-SWEP.Primary.ClipSize       = 1 -- 1
-SWEP.Primary.DefaultClip    = 1 -- 1
-SWEP.Primary.Ammo           = "stalker_tele" -- do i need this?
+SWEP.Primary.ClipSize       = 1 
+SWEP.Primary.DefaultClip    = 1 
+SWEP.Primary.Ammo           = "stalker_tele"
 SWEP.Primary.TeleSound      = Sound("npc/turret_floor/active.wav")
 SWEP.Primary.MissSound      = Sound("ambient/atmosphere/cave_hit2.wav")
 SWEP.Primary.ManaMin        = 10
@@ -95,14 +95,12 @@ local plymeta = FindMetaTable("Player")
 -- Initialize TeleEntities
 
 local function createTeleEntry(ent)
-    --print("add:", ent:GetClass())
     return { ["Mass"]  = nil,
              ["Class"] = ent:GetClass(),
              ["Ent"]   = ent}
 end
 
 function SWEP:InitializeTeleEnts()
-    --print("Initialize Tele Ents")
     self.TeleEnts = {}
 
     for i,ent in ipairs(ents.GetAll()) do
@@ -123,7 +121,6 @@ function SWEP:InitializeTeleEnts()
             end
         end
     end
-    --PrintTable(self.TeleEnts)
 end
 
 
@@ -131,7 +128,6 @@ end
 
 function SWEP:ShopInit()
     AddToShopFallback(STALKER.fallbackTable, ROLE_STALKER, self)
-    --AddWeaponIntoFallbackTable(self.id, STALKER)
 end
 
 function SWEP:Initialize()
@@ -161,14 +157,12 @@ function SWEP:Initialize()
                 --     ent.Mass = mass
                 -- end
             end
-            --PrintTable(self.TeleEnts)
         end)
 
 
     -- if SERVER
     else
         net.Receive("RequestMassList", function(len, ply)
-            --print("requested physics list")
             local masses = {}
             for index, entry in pairs(self.TeleEnts) do
                 local ent = entry.Ent
@@ -198,7 +192,7 @@ end
 
 function SWEP:Think()
     local owner = self:GetOwner()
-    if not IsValid(owner) or owner:GetSubRole() ~= ROLE_STALKER or not owner:GetNWBool("ttt2_hd_stalker_mode", false) then return end
+    if not IsValid(owner) or owner:GetSubRole() ~= ROLE_STALKER or not owner:GetNWBool("ttt2_slk_stalker_mode", false) then return end
 
     if not owner:GetNWBool("ttt2_slk_tele_active") then
 
@@ -225,9 +219,7 @@ function SWEP:Think()
             self:SetClip1(0)
         return end
 
-        if self:GetNextSecondaryFire() > CurTime() then
-            --print("NextSecondaryFire not valid:", self:GetNextSecondaryFire())
-        return end
+        if self:GetNextSecondaryFire() > CurTime() then return end
 
         self:SetClip1(1)
 
@@ -245,7 +237,7 @@ function SWEP:Reload() end
 
 function SWEP:SetNextFire(time)
     self:SetNextSecondaryFire(CurTime() + time)
-    RECHARGE_STATUS:SetRecharge(self:GetOwner(), "ttt2_slk_tele_recharge", time, true)
+    RECHARGE_STATUS:SetRechargeTimer(self:GetOwner(), "ttt2_slk_tele_recharge", time, true)
 end
 
 
@@ -272,7 +264,7 @@ end
 -- end
 function SWEP:PrimaryAttack()
     local owner = self:GetOwner()
-    if not IsValid(owner) or owner:GetSubRole() ~= ROLE_STALKER or not owner:GetNWBool("ttt2_hd_stalker_mode", false) then return end
+    if not IsValid(owner) or owner:GetSubRole() ~= ROLE_STALKER or not owner:GetNWBool("ttt2_slk_stalker_mode", false) then return end
 
     self:SetNextPrimaryFire(CurTime() + self.Primary.Delay)
 
@@ -290,7 +282,7 @@ end
 
 function SWEP:SecondaryAttack()
     local owner = self:GetOwner()
-    if not IsValid(owner) or owner:GetSubRole() ~= ROLE_STALKER or not owner:GetNWBool("ttt2_hd_stalker_mode", false) then return end
+    if not IsValid(owner) or owner:GetSubRole() ~= ROLE_STALKER or not owner:GetNWBool("ttt2_slk_stalker_mode", false) then return end
     if not self:CanSecondaryAttack() then return end
 
     -- local tgt, spos, sdest, trace = self:MeleeTrace()
@@ -315,7 +307,6 @@ function SWEP:CanTele(ent, phys)
     -- TODO: Test for Mana
     -- return canTele, enoughMana
 
-
     if (self.TeleEnts[ent:EntIndex()] or ent:IsRagdoll() ) and not IsValid(ent:GetParent()) and not IsValid(ent:GetOwner()) then
         if SERVER then
             if IsValid(phys) and phys:IsMotionEnabled() and phys:IsMoveable() then
@@ -325,9 +316,9 @@ function SWEP:CanTele(ent, phys)
         else
             return true
         end
+    else
+        return false
     end
-
-    print("Cannot Tele: FALSE")
 end
 
 -- Turnes Prop into controlled prop
@@ -427,7 +418,6 @@ function SWEP:FindTeleObject()
     local spos  = owner:GetShootPos()
     local sdest = spos + (owner:GetAimVector() * self.MaxDistance)
 
-    --filter = table.insert(filter, self)
     local tr = util.TraceLine({
         start = spos,
         endpos = sdest,
@@ -439,12 +429,10 @@ function SWEP:FindTeleObject()
         if SERVER then
             local phys = tr.Entity:GetPhysicsObject()
             if IsValid(phys) and self:CanTele(tr.Entity, phys) then
-                --print("Found Object Line Trace")
                 return tr.Entity
             end
         else
             if self:CanTele(tr.Entity) then
-                --print("Found Object Line Trace")
                 return tr.Entity
             end
         end
@@ -554,8 +542,6 @@ end
 
 
 
-
-
 if CLIENT then
     local TryT = LANG.TryTranslation
 	local ParT = LANG.GetParamTranslation
@@ -564,7 +550,7 @@ if CLIENT then
         local ply = LocalPlayer()
 
         if not IsValid(ply) or not ply:Alive() or ply:IsSpec() then return end
-        if ply:GetSubRole() ~= ROLE_STALKER or not ply:GetNWBool("ttt2_hd_stalker_mode", false) then return end
+        if ply:GetSubRole() ~= ROLE_STALKER or not ply:GetNWBool("ttt2_slk_stalker_mode", false) then return end
 
         local wep = ply:GetActiveWeapon()
 
@@ -593,7 +579,7 @@ if CLIENT then
         local ply = LocalPlayer()
 
         if not IsValid(ply) or not ply:Alive() or ply:IsSpec() then return end
-        if ply:GetSubRole() ~= ROLE_STALKER or not ply:GetNWBool("ttt2_hd_stalker_mode", false) then return end
+        if ply:GetSubRole() ~= ROLE_STALKER or not ply:GetNWBool("ttt2_slk_stalker_mode", false) then return end
 
         local wep = ply:GetActiveWeapon()
 
@@ -609,7 +595,7 @@ if CLIENT then
         local ply = LocalPlayer()
 
         if not IsValid(ply) or not ply:Alive() or ply:IsSpec() then return end
-        if ply:GetSubRole() ~= ROLE_STALKER or not ply:GetNWBool("ttt2_hd_stalker_mode", false) then return end
+        if ply:GetSubRole() ~= ROLE_STALKER or not ply:GetNWBool("ttt2_slk_stalker_mode", false) then return end
 
         local wep = ply:GetActiveWeapon()
 
@@ -654,12 +640,12 @@ if CLIENT then
 
     function SWEP:Deploy()
         --if SERVER then return true end
-        hook.Add("PreDrawHalos", "Stalker:HighlightTeleObjects", drawOutline)
+        hook.Add("PreDrawHalos", "TTT2Stalker:HighlightTeleObjects", drawOutline)
         -- Clear Highlight Object, so the Player needs to look for it again
-        hook.Add("CreateMove", "Stalker:RemoveHighlightObject", setNewHighlightObject)
+        hook.Add("CreateMove", "TTT2Stalker:RemoveHighlightObject", setNewHighlightObject)
 
-        hook.Add("TTTModifyTargetedEntity", "Stalker:ChangeTargetIDTele", changeTargetID)
-        hook.Add("TTTRenderEntityInfo", "Stalker:DrawTargetIDTele", drawTargetID)
+        hook.Add("TTTModifyTargetedEntity", "TTT2Stalker:ChangeTargetIDTele", changeTargetID)
+        hook.Add("TTTRenderEntityInfo", "TTT2Stalker:DrawTargetIDTele", drawTargetID)
 
         RECHARGE_STATUS:AddStatus("ttt2_slk_tele_recharge")
         return true
@@ -667,12 +653,12 @@ if CLIENT then
 
     function SWEP:Holster()
         --if SERVER then return true end
-        hook.Remove("PreDrawHalos", "Stalker:HighlightTeleObjects")
+        hook.Remove("PreDrawHalos", "TTT2Stalker:HighlightTeleObjects")
         -- Clear Highlight Object, so the Player needs to look for it again
-        hook.Remove("CreateMove", "Stalker:RemoveHighlightObject")
+        hook.Remove("CreateMove", "TTT2Stalker:RemoveHighlightObject")
 
-        hook.Remove("TTTModifyTargetedEntity", "Stalker:ChangeTargetIDTele")
-        hook.Remove("TTTRenderEntityInfo", "Stalker:DrawTargetIDTele")
+        hook.Remove("TTTModifyTargetedEntity", "TTT2Stalker:ChangeTargetIDTele")
+        hook.Remove("TTTRenderEntityInfo", "TTT2Stalker:DrawTargetIDTele")
 
         RECHARGE_STATUS:RemoveStatus("ttt2_slk_tele_recharge")
         return true

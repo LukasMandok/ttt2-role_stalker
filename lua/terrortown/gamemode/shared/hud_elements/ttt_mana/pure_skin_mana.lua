@@ -82,7 +82,7 @@ if CLIENT then -- CLIENT
 		local client = LocalPlayer()
 
 		--return IsValid(client)
-		return HUDEditor.IsEditing or (client:IsActive() and client:Alive() and client:GetSubRole() == ROLE_STALKER and client:GetNWBool("ttt2_hd_stalker_mode", false))
+		return HUDEditor.IsEditing or (client:IsActive() and client:Alive() and client:GetSubRole() == ROLE_STALKER and client:GetNWBool("ttt2_slk_stalker_mode", false))
 	end
 
 	function HUDELEMENT:Draw()

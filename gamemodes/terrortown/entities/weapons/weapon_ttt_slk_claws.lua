@@ -140,11 +140,11 @@ function SWEP:Equip(owner)
     end
     --self.ViewModel = "models/weapons/v_banshee.mdl"
     --self.WorldModel = ""
-    -- net.Start("ttt2_hdn_network_wep")
+    -- net.Start("ttt2_slk_network_wep")
     --     net.WriteEntity(self)
     --     net.WriteString("")
     -- net.Broadcast()
-    -- STATUS:RemoveStatus(owner, "ttt2_hdn_knife_recharge")
+    -- STATUS:RemoveStatus(owner, "ttt2_slk_knife_recharge")
 end
 
 function SWEP:PrimaryAttack()
@@ -154,7 +154,7 @@ function SWEP:PrimaryAttack()
     --self.ViewModel = "models/weapons/v_banshee.mdl"
     local owner = self:GetOwner()
 
-    if not IsValid(owner) or owner:GetSubRole() ~= ROLE_STALKER or not owner:GetNWBool("ttt2_hd_stalker_mode", false) then return end
+    if not IsValid(owner) or owner:GetSubRole() ~= ROLE_STALKER or not owner:GetNWBool("ttt2_slk_stalker_mode", false) then return end
 
     owner:LagCompensation(true)
 
@@ -206,7 +206,7 @@ function SWEP:SecondaryAttack()
     --self.ViewModel = "models/weapons/v_banshee.mdl"
     local owner = self:GetOwner()
 
-    if not IsValid(owner) or owner:GetSubRole() ~= ROLE_STALKER or not owner:GetNWBool("ttt2_hd_stalker_mode", false) then return end
+    if not IsValid(owner) or owner:GetSubRole() ~= ROLE_STALKER or not owner:GetNWBool("ttt2_slk_stalker_mode", false) then return end
 
     owner:LagCompensation(true)
 

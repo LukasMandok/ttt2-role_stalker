@@ -2,6 +2,7 @@ RECHARGE_STATUS = {}
 
 -- register networkt messages
 util.AddNetworkString("ttt2_recharge_status_effect_add")
+util.AddNetworkString("ttt2_recharge_status_effect_timer")
 util.AddNetworkString("ttt2_recharge_status_effect_recharge")
 util.AddNetworkString("ttt2_recharge_status_effect_set_id")
 util.AddNetworkString("ttt2_recharge_status_effect_remove")
@@ -28,11 +29,19 @@ end
 -- @param[default=false] boolean showDuration Whether the duration should be shown
 -- @param[default=1] number active_icon The numeric id of a specific status icon
 -- @realm server
-function RECHARGE_STATUS:SetRecharge(ply, id, duration, showDuration)
-	net.Start("ttt2_recharge_status_effect_recharge")
+function RECHARGE_STATUS:SetRechargeTimer(ply, id, duration, showDuration)
+	net.Start("ttt2_recharge_status_effect_timer")
         net.WriteString(id)
         net.WriteUInt(duration, 32)
         net.WriteBool(showDuration or false)
+	net.Send(ply)
+end
+
+
+function RECHARGE_STATUS:SetRecharge(ply, id, bool)
+	net.Start("ttt2_recharge_status_effect_recharge")
+		net.WriteString(id)
+		net.WriteBool(bool)
 	net.Send(ply)
 end
 

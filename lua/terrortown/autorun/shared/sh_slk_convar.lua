@@ -26,7 +26,7 @@ CreateConVar("ttt2_slk_lifesteal_corpse_enabled", "1", {FCVAR_ARCHIVE, FCVAR_NOT
 
 ---------------------------------
 
-hook.Add("TTTUlxDynamicRCVars", "ttt2_slk_ulx_convars", function(tbl)
+hook.Add("TTTUlxDynamicRCVars", "TTT2Stalker:ULXConvars", function(tbl)
     tbl[ROLE_STALKER] = tbl[ROLE_STALKER] or {}
     
     -- General

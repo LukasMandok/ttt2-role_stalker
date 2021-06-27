@@ -6,6 +6,10 @@ if SERVER then
     util.AddNetworkString("ttt2_slk_epop")
     util.AddNetworkString("ttt2_slk_epop_defeat")
     util.AddNetworkString("ttt2_slk_network_wep")
+
+    resource.AddFile("materials/hud/hvision.vmt")
+    resource.AddFile("materials/hud/hvision_dx6.vmt")
+    resource.AddFile("materials/vgui/ttt/hud/hud_icon_slk_cloak")
 end
 
 local plymeta = FindMetaTable("Player")
@@ -19,35 +23,70 @@ local CLOAK_PARTIAL = 2
 local CLOAK_NONE = 1
 
 if CLIENT then
-    --print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1 Load Stalker Handler")
-    -- HiddenWallhack not for stalker
+    ----------------------------------------------------------------------
+    -- Credits got to: https://github.com/ZacharyHinds/ttt2-role_hidden --
+    ----------------------------------------------------------------------
 
-    -- DoHiddenVision (hook("RenderScreenspaceEffects")) in sh_hd_handler
-    
-    -- net.Receive( "Flay", function( len )
+    local function StalkerHUDOverlay()
+        local client = LocalPlayer()
 
-    --     if LocalPlayer():Team() == TEAM_HUMAN then
+        if client:GetBaseRole() ~= ROLE_HIDDEN then return end
+
+        if client:GetNWBool("ttt2_slk_stalker_mode", false) then
+            render.UpdateScreenEffectTexture()
+            render.SetMaterial(Material("hud/hvision.vmt", "noclamp smooth"))
+            render.DrawScreenQuad()
+        end
+    end
+
+    hook.Add("PostDrawOpaqueRenderables", "TTT2Stalker:PlayerVision", StalkerHUDOverlay)
+
+
+    ColorMod = {}
+    ColorMod[ "$pp_colour_addr" ] = 0.09
+    ColorMod[ "$pp_colour_addg" ] = 0.03
+    ColorMod[ "$pp_colour_addb" ] = 0
+    ColorMod[ "$pp_colour_brightness" ] = 0
+    ColorMod[ "$pp_colour_contrast" ] = 0.9
+    ColorMod[ "$pp_colour_colour" ] = 1
+    ColorMod[ "$pp_colour_mulr" ] = 1  
+    ColorMod[ "$pp_colour_mulg" ] = 1 
+    ColorMod[ "$pp_colour_mulb" ] = 1 
+
+    local pattern = Material("pp/texturize/pattern1.png")
+
+    local function DoStalkerVision()
+        local client = LocalPlayer()
+        if not client:Alive() or client:IsSpec() then return end
+        if client:GetBaseRole() ~= ROLE_STALKER or not client:GetNWBool("ttt2_slk_stalker_mode") then return end
+
+        DrawColorModify(ColorMod)
+        local modifier = client:GetNWInt("ttt2_slk_cloak_strength") / 100 or 1
+        ColorMod[ "$pp_colour_addr" ] = .09 * modifier
+        ColorMod[ "$pp_colour_addg" ] = .03 * modifier
+	    ColorMod[ "$pp_colour_contrast" ] = 0.9
+	    ColorMod[ "$pp_colour_colour" ] = 1
+        --ColorMod[ "$pp_colour_brightness"] = - 0.3 * (1-modifier)
+        if modifier != 1 then
+            ColorMod[ "$pp_colour_addb"] = 0.05 * (1-modifier)
+            DrawSharpen( 1 + 0.2 * (1-modifier), 1 + 0.2 * (1-modifier) )
+        end
         
-    --         DisorientTime = CurTime() + 20
-    --         ViewWobble = 7.5
-    --         MotionBlur = 0.9
-    --         Sharpen = 4.5
-    --         ColorModify[ "$pp_colour_mulg" ]   =  3.5
-    --         ColorModify[ "$pp_colour_mulr" ]   =  4.5
-    --         ColorModify[ "$pp_colour_addr" ]   =  0.2
-    --         ColorModify[ "$pp_colour_addg" ]   =  0.1
-    --         ColorModify[ "$pp_colour_colour" ] = -3.0
-        
-    --     else
-        
-    --         //ViewWobble = 2.5
-    --         Sharpen = 2.5
-    --         MotionBlur = 0.5
-    --         ColorModify[ "$pp_colour_colour" ] = -1.2
-        
-    --     end
-    
-    -- end )
+
+        cam.Start3D(EyePos(), EyeAngles())
+
+        render.SuppressEngineLighting(true)
+        render.SetColorModulation(1, 1, 1)
+        render.SuppressEngineLighting(false)
+
+        cam.End3D()
+    end
+
+    hook.Add("RenderScreenspaceEffects", "TTT2Stalker:VisionRender", DoStalkerVision)
+
+    ----------------------------------------------------------------------
+    ----------------------------------------------------------------------
+    ----------------------------------------------------------------------
 end
 
 
@@ -69,13 +108,119 @@ end
 
 if SERVER then
 
-    -- using plymeta:SetCloakMode
+    ----------------------------------------------------------------------
+    -- Credits got to: https://github.com/ZacharyHinds/ttt2-role_hidden --
+    ----------------------------------------------------------------------
 
-    -- using plymeta:GetloakMode
+    local function ActivateCloaking(ply)
+        ply.stalkerColor = ply:GetColor()
+        ply.stalkerRenderMode = ply:GetRenderMode()
+        ply.stalkerMaterial = ply:GetMaterial()
 
-    -- using plymeta:UpdateCloaking
+        -- local ply_color = table.Copy(ply.stalkerColor)
+        -- ply_color.a = math.Round(ply_color.a * 0.05)
+        local ply_color = Color(255, 255, 255, 50)
 
-    -- using hook "HiddenCloakThink"
+        ply:SetColor(ply_color)
+        ply:SetMaterial("sprites/heatwave")
+        ply:SetRenderMode(RENDERMODE_TRANSALPHA)
+    end
+
+    local max_pct = 0.6
+    local health_threshold = 25
+    local min_alpha = 0.1
+    local max_alpha = 0.7
+
+    function plymeta:SetStalkerCloakStrength(strength)
+        self:SetNWInt("ttt2_slk_cloak_strength", strength)
+        if strength < 100 and not self.stalkerCloakRecharging then
+            self.stalkerCloakRecharging = true
+            RECHARGE_STATUS:SetRecharge(self, "ttt2_slk_invisbility", true)
+        elseif strength == 100 and self.stalkerCloakRecharging then
+            self.stalkerCloakRecharging = false
+            RECHARGE_STATUS:SetRecharge(self, "ttt2_slk_invisbility", false)
+        end
+    end
+
+    function plymeta:SetStalkerCloakMode(cloak, delta, offset, override)
+        delta  = delta or 1
+        offset = offset or 0
+
+        local clr = self:GetColor()
+        if not self.stalkerColor then self.stalkerColor = clr end
+        local render = self:GetRenderMode()
+        if not self.stalkerRenderMode then self.stalkerRenderMode = render end
+        local mat = self:GetMaterial()
+        if not self.stalkerMaterial then self.stalkerMaterial = mat end
+
+        if cloak == CLOAK_FULL then
+            mat = "sprites/heatwave"
+            clr = Color(255, 255, 255, 3)
+            render = RENDERMODE_TRANSALPHA
+            self:SetStalkerCloakStrength(100)
+
+        elseif cloak == CLOAK_PARTIAL then
+            --local pct = math.Clamp(self:Health() / (self:GetMaxHealth() - 25), 0, 1)
+
+            local pct = math.Clamp((self:Health() / (self:GetMaxHealth() - health_threshold) - 1) * -max_pct, 0, 1)
+            local alpha = ((override and offset) or (pct + offset)) * delta
+            mat = self.stalkerMaterial
+            clr = self.stalkerColor
+
+            alpha = math.Clamp(alpha, min_alpha, max_alpha)
+            clr.a = alpha * 255
+            self:SetStalkerCloakStrength((1 - alpha) * 100)
+
+        else
+            clr = self.stalkerColor
+            render = self.stalkerRenderMode
+            mat = self.stalkerMaterial
+            self.stalkerCloakTimeout = nil
+            self:SetStalkerCloakStrength(0)
+        end
+        self:SetColor(clr)
+        self:SetRenderMode(render)
+        self:SetMaterial(mat)
+        self.stalkerCloakMode = cloak
+    end
+
+    function plymeta:GetStalkerCloakMode()
+        return self.stalkerCloakMode
+    end
+
+    function plymeta:UpdateStalkerCloaking(timeout, delay, alphaOffset, override)
+        if not IsValid(self) or not self:IsPlayer() then return end
+        if GetRoundState() ~= ROUND_ACTIVE or self:GetBaseRole() ~= ROLE_STALKER then self:SetStalkerCloakMode(CLOAK_NONE) return end  
+        if self:IsSpec() or not self:Alive() then self:SetStalkerCloakMode(CLOAK_NONE) return end
+        if not self:GetNWBool("ttt2_slk_stalker_mode", false) then self:SetStalkerCloakMode(CLOAK_NONE) return end
+
+        if timeout then
+            self.stalkerCloakDelay = delay or (8 * (self:Health() / self:GetMaxHealth()))
+            self.stalkerCloakTimeout = CurTime() + self.stalkerCloakDelay
+            self.stalkerAlphaOffset = alphaOffset or 0
+        elseif self.stalkerCloakTimeout and self.stalkerCloakTimeout > CurTime() then
+            timeout = true
+        end
+
+        if timeout then
+            local start = self.stalkerCloakTimeout - self.stalkerCloakDelay
+            local delta = (1 - (CurTime() - start) / self.stalkerCloakDelay)
+
+            self:SetStalkerCloakMode(CLOAK_PARTIAL, delta, self.stalkerAlphaOffset, override)
+        else
+            self:SetStalkerCloakMode(CLOAK_FULL)
+        end
+    end
+
+    local function DeactivateCloaking(ply)
+        ply:SetColor(ply.stalkerColor)
+        ply:SetRenderMode(ply.stalkerRenderMode)
+        ply:SetMaterial(ply.stalkerMaterial)
+    end
+
+    ----------------------------------------------------------------------
+    ----------------------------------------------------------------------
+    ----------------------------------------------------------------------
 
     -- TODO: Has to be reimplemente. Any way round this?
     local function BetterWeaponStrip(ply, exclude_class)
@@ -97,7 +242,7 @@ if SERVER then
         end
     end
 
-    function plymeta:ActivateStalkerStalker()
+    function plymeta:ActivateStalkerMode()
         if self:GetSubRole() ~= ROLE_STALKER then return end
 
         local exclude_tbl = {}
@@ -108,32 +253,30 @@ if SERVER then
 
         local mana_max = GetConVar("ttt2_slk_maximal_mana"):GetInt()
 
-        self:SetNWBool("ttt2_hd_stalker_mode", true)
+        self:SetNWBool("ttt2_slk_stalker_mode", true)
         self:SetNWInt("ttt2_stalker_mana_max", mana_max)
         self:SetNWInt("ttt2_stalker_mana", mana_max)
-        self:UpdateCloaking()
+        self:UpdateStalkerCloaking()
 
-        -- events.Trigger(EVENT_HDN_ACTIVATE, self)
+        -- events.Trigger(EVENT_slk_ACTIVATE, self)
     end
 
-    function plymeta:DeactivateStalkerStalker()
-        print("Deaktivate Stalker")
-        self:SetNWBool("ttt2_hd_stalker_mode", false)
+    function plymeta:DeactivateStalkerMode()
+        self:SetNWBool("ttt2_slk_stalker_mode", false)
         self:SetNWInt("ttt2_stalker_mana", 0)
-        self:UpdateCloaking()
+        self:UpdateStalkerCloaking()
         -- DeactivateCloaking(self)
     end
 
-    function plymeta:SetStalkerMode_slk(bool)
+    function plymeta:EnableStalkerMode(bool)
         if bool then
-            print("Activate Stalker Mode")
-            self:ActivateStalkerStalker()
+            self:ActivateStalkerMode()
             net.Start("ttt2_slk_epop")
-            net.WriteString(self:Nick())
-            -- net.SendOmit(self)
+                net.WriteString(self:Nick())
+                -- net.SendOmit(self)
             net.Broadcast()
         else
-            self:DeactivateStalkerStalker()
+            self:DeactivateStalkerMode()
         end
     end
 
@@ -144,26 +287,26 @@ if SERVER then
 
     function plymeta:SetRegenerateMode(bool)
         if bool then
-            --print("CloakMode:", self:GetCloakMode(), CLOAK_FULL)
-            if self:GetCloakMode() ~= CLOAK_FULL or self:GetMana() >= self:GetMaxMana() then
+            --print("CloakMode:", self:GetStalkerCloakMode(), CLOAK_FULL)
+            if self:GetStalkerCloakMode() ~= CLOAK_FULL or self:GetMana() >= self:GetMaxMana() then
                 --print("Cloak is not fully charged: do not aktivate Recharge Moded")
                 return
             end
             --print("Aktivate Cloak Recharge.")
-            self:SetCloakMode(CLOAK_PARTIAL, 1, 0.4)
+            self:SetStalkerCloakMode(CLOAK_PARTIAL, 1, 0.4)
             self:SetNWBool("ttt2_slk_regenerate_mode", true)
         else
             --print("Deaktivate Cloak Recharge")
-            self:UpdateCloaking(true, 1, 0.4)
+            self:UpdateStalkerCloaking(true, 1, 0.4)
             self:SetNWBool("ttt2_slk_regenerate_mode", false)
         end
     end
 
-    hook.Add("Think", "StalkerCloakThink", function()
+    hook.Add("Think", "TTT2Stalker:CloakThink", function()
         local plys = player.GetAll()
         for i = 1, #plys do
             local ply = plys[i]
-            if ply:GetSubRole() ~= ROLE_STALKER or ply:GetCloakMode() == CLOAK_NONE then continue end
+            if ply:GetSubRole() ~= ROLE_STALKER or ply:GetStalkerCloakMode() == CLOAK_NONE then continue end
 
             if ply:GetNWBool("ttt2_slk_regenerate_mode", false) then
                 if ply:GetMana() < ply:GetMaxMana() then
@@ -177,77 +320,100 @@ if SERVER then
                     ply:SetRegenerateMode(false)
                 end
             end
-            ply:UpdateCloaking()
+            ply:UpdateStalkerCloaking()
         end
     end)
 
-    hook.Add("EntityTakeDamage", "TTT2StalkerTakeDamage", function(tgt, dmg)
+    hook.Add("EntityTakeDamage", "TTT2Stalker:TakeDamage", function(tgt, dmg)
         if not IsValid(tgt) or not tgt:IsPlayer() or not tgt:Alive() or tgt:IsSpec() then return end
         if tgt:GetSubRole() ~= ROLE_STALKER then return end
-        if not tgt:GetNWBool("ttt2_hd_stalker_mode", false) then return end
+        if not tgt:GetNWBool("ttt2_slk_stalker_mode", false) then return end
         tgt:SetRegenerateMode(false)
-        tgt:UpdateCloaking(true)
+        tgt:UpdateStalkerCloaking(true)
     end)
 
+    
+    local function ResetStalkerRole()
+        local plys = player.GetAll()
+        for i = 1, #plys do
+            local ply = plys[i]
+            ply:SetNWBool("ttt2_slk_stalker_mode", false)
+            ply:SetNWBool("ttt2_slk_regenerate_mode", false)
+            -- TODO: Was muss hier noch alles rein?
+            ply.stalkerCloakTimeout = nil
+            ply.stalkerUseTimeout = nil
+        end
+    end
 
-    -- using ResetHiddenRole from Hidden and their hooks,
-    -- probably need to implement for own NetVars
+    hook.Add("TTTPrepRound", "TTT2Stalker:ResetRole", ResetStalkerRole)
+    hook.Add("TTTBeginRound", "TTT2Stalker:ResetRole", ResetStalkerRole)
+    hook.Add("TTTEndRound", "TTT2Stalker:ResetRole", ResetStalkerRole)
 
-    hook.Add("PlayerCanPickupWeapon", "NoStalkerPickups", function(ply, wep)
+
+    hook.Add("PlayerCanPickupWeapon", "TTT2Stalker:NoPickups", function(ply, wep)
         if not IsValid(ply) or not ply:Alive() or ply:IsSpec() then return end
-        if ply:GetSubRole() ~= ROLE_STALKER or not ply:GetNWBool("ttt2_hd_stalker_mode", false) then return end
+        if ply:GetSubRole() ~= ROLE_STALKER or not ply:GetNWBool("ttt2_slk_stalker_mode", false) then return end
 
         return (wep:GetClass() == "weapon_ttt_slk_claws" or wep:GetClass() == "weapon_ttt_slk_tele" or wep:GetClass() == "weapon_ttt_slk_scream")
     end)
 
-     hook.Add("TTT2StaminaRegen", "StalkerStaminaMod", function(ply, stamMod)
+     hook.Add("TTT2StaminaRegen", "TTT2Stalker:StaminaMod", function(ply, stamMod)
         if not IsValid(ply) or not ply:Alive() or ply:IsSpec() then return end
-        if ply:GetSubRole() ~= ROLE_STALKER or not ply:GetNWBool("ttt2_hd_stalker_mode") then return end
+        if ply:GetSubRole() ~= ROLE_STALKER or not ply:GetNWBool("ttt2_slk_stalker_mode") then return end
 
         stamMod[1] = stamMod[1] * 1.6
     end)
 
-    -- using hook("ScalePlayerDamage") of hidden
+    hook.Add("ScalePlayerDamage", "TTT2Stalker:DmgPreTransform", function(ply, _, dmginfo)
+        local attacker = dmginfo:GetAttacker()
+        if attacker:GetBaseRole() ~= ROLE_STALKER then return end
+        if attacker:GetNWBool("ttt2_slk_stalker_mode") then return end
 
-    hook.Add("DoPlayerDeath", "TTT2StalkerDied", function(ply, attacker, dmgInfo)
+        dmginfo:ScaleDamage(0.2)
+    end)
+
+    hook.Add("DoPlayerDeath", "TTT2Stalker:Died", function(ply, attacker, dmgInfo)
         if not IsValid(ply) or not IsValid(attacker) or ply:IsSpec() or attacker:IsSpec() then return end
         
-        if ply:GetSubRole() == ROLE_STALKER and ply:GetNWBool("ttt2_hd_stalker_mode", false) then
+        if ply:GetSubRole() == ROLE_STALKER and ply:GetNWBool("ttt2_slk_stalker_mode", false) then
 
-            ply:SetStalkerMode_slk(false)
-            -- events.Trigger(EVENT_HDN_DEFEAT, ply, attacker, dmgInfo)
+            ply:EnableStalkerMode(false)
+            -- events.Trigger(EVENT_slk_DEFEAT, ply, attacker, dmgInfo)
             net.Start("ttt2_slk_epop_defeat")
-            net.WriteString(ply:Nick())
+                net.WriteString(ply:Nick())
             net.Broadcast()
 
-        elseif attacker:GetSubRole() == ROLE_STALKER and attacker:GetNWBool("ttt2_hd_stalker_mode", false) and not ply:IsInTeam(attacker) then
+        elseif attacker:GetSubRole() == ROLE_STALKER and attacker:GetNWBool("ttt2_slk_stalker_mode", false) and not ply:IsInTeam(attacker) then
             attacker:AddCredits(1)
         end
     end)
 
-    -- using hook("PlayerSPawn") of hidden
+    hook.Add("PlayerSpawn", "TTT2Stalker:Respawn", function(ply)
+        if ply:GetBaseRole() ~= ROLE_STALKER then return end
+        ply:EnableStalkerMode(false)
+    end)
 
 end
 
-hook.Add("TTTPlayerSpeedModifier", "StalkerSpeedBonus", function(ply, _, _, speedMod)
-    if ply:GetSubRole() ~= ROLE_STALKER or not ply:GetNWBool("ttt2_hd_stalker_mode") then return end
+hook.Add("TTTPlayerSpeedModifier", "TTT2Stalker:SpeedBonus", function(ply, _, _, speedMod)
+    if ply:GetSubRole() ~= ROLE_STALKER or not ply:GetNWBool("ttt2_slk_stalker_mode") then return end
 
     speedMod[1] = speedMod[1] * 1.3
 end)
 
 if CLIENT then
-    hook.Add("TTT2PreventAccessShop", "PreventShopOutsideStalkerMode", function()
+    hook.Add("TTT2PreventAccessShop", "TTT2Stalker:PreventShopOutsideStalkerMode", function()
         local ply = LocalPlayer()
         if ply:GetSubRole() ~= ROLE_STALKER or not ply:Alive() or ply:IsSpec() then return end
 
-        return ply:GetNWBool("ttt2_hd_stalker_mode", false) == false
+        return ply:GetNWBool("ttt2_slk_stalker_mode", false) == false
     end)
 
 
     net.Receive("ttt2_slk_epop", function()
         EPOP:AddMessage({
             text = LANG.GetParamTranslation("slk_epop_title", {nick = net.ReadString()}),
-            color = HIDDEN.ltcolor
+            color = STALKER.ltcolor
             },
             LANG.GetTranslation("slk_epop_desc")
         )
@@ -256,7 +422,7 @@ if CLIENT then
     net.Receive("ttt2_slk_epop_defeat", function()
         EPOP:AddMessage({
             text = LANG.GetParamTranslation("slk_epop_defeat_title", {nick = net.ReadString()}),
-            color = HIDDEN.ltcolor
+            color = STALKER.ltcolor
             },
             LANG.GetTranslation("slk_epop_defeat_desc")
         )

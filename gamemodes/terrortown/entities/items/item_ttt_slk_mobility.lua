@@ -27,34 +27,14 @@ end
 ITEM.RegenTime = 2
 
 
--- hook.Add("PostInitPostEntity", "Intiaialize_item_ttt_slk_mobility", function()
---     AddToShopFallback(STALKER.fallbackTable, ROLE_STALKER, ITEM)
--- end)
-
 function ITEM:Initialize()
     AddToShopFallback(STALKER.fallbackTable, ROLE_STALKER, self)
 end
---     if SERVER then
---         AddEquipmentToRole(ROLE_STALKER, self)
---     elseif CLIENT then
---         AddEquipmentToRoleEquipment(ROLE_STALKER, self)
---     end
--- end
-
-
--- if SERVER then
-    -- function ITEM:Initialize()
-    --     AddEquipmentToRole(ROLE_STALKER, self)
-    -- end
-
---local plymeta = FindMetaTable("Player")
-
---TODO: überarbeiten, sodass es besser funktioniert
 
 function ITEM:Bought(owner)
     if owner:GetSubRole() ~= ROLE_STALKER or not owner:Alive() or owner:IsSpec() then return end
 
-    hook.Add("KeyPress", "StalkerDashJump", function(ply, key)
+    hook.Add("KeyPress", "TTT2Stalker:DashJump", function(ply, key)
         if not ply:HasEquipmentItem(self.id) or ply:GetSubRole() ~= ROLE_STALKER or not ply:Alive() or ply:IsSpec() then return end
 
         if key == IN_JUMP and ply:KeyDown(IN_SPEED) then
@@ -76,25 +56,23 @@ function ITEM:CanJump(ply)
     return ply.NextJump and ply.NextJump < CurTime() or true
 end
 
-function ITEM:DashJump(owner)
-    if not self:CanJump(owner) then return end
+function ITEM:DashJump(ply)
+    if not self:CanJump(ply) then return end
 
-    --owner = self:GetOwner()
-
-    if owner:OnGround() then
-        local jump = owner:GetAimVector() * 400 + Vector(0, 0, 350)
-        owner:SetVelocity(jump)
-        owner:EmitSound("npc/fast_zombie/foot3.wav", 40, math.random(90, 110))
-        self:SetNextJump(owner)
+    if ply:OnGround() then
+        local jump = ply:GetAimVector() * 400 + Vector(0, 0, 350)
+        ply:SetVelocity(jump)
+        ply:EmitSound("npc/fast_zombie/foot3.wav", 40, math.random(90, 110))
+        self:SetNextJump(ply)
     -- else
-    --     local tr = util.TraceLine(util.GetPlayerTrace(owner))
+    --     local tr = util.TraceLine(util.GetPlayerTrace(ply))
 
-    --     if tr.HitPos:Distance(owner:GetShootPos()) < 50 and not owner:OnGround() then
-    --         owner:SetLocalVelocity(Vector(0, 0, 0))
-    --         owner:SetMoveType(MOVETYPE_NONE)
-    --     elseif owner:GetMoveType() == MOVETYPE_NONE then
-    --         owner:SetMoveType(MOVETYPE_WALK)
-    --         owner:SetLocalVelocity(owner:GetAimVector() * 500)
+    --     if tr.HitPos:Distance(ply:GetShootPos()) < 50 and not ply:OnGround() then
+    --         ply:SetLocalVelocity(Vector(0, 0, 0))
+    --         ply:SetMoveType(MOVETYPE_NONE)
+    --     elseif ply:GetMoveType() == MOVETYPE_NONE then
+    --         ply:SetMoveType(MOVETYPE_WALK)
+    --         ply:SetLocalVelocity(ply:GetAimVector() * 500)
     --     end
     end
 end
