@@ -1,7 +1,7 @@
 hook.Add("Initialize", "TTT2Stalker:InitializeStatus", function()
     RECHARGE_STATUS:RegisterStatus("ttt2_slk_invisbility", {
         ready = {
-            hud = Material("vgui/ttt/hud/hud_icon_slk_cloak"),
+            hud = Material("vgui/ttt/hud/hud_icon_slk_cloak_fading"),
             type = "good",
             DrawInfo = function()
                 local ply = LocalPlayer()

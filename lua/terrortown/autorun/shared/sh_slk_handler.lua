@@ -7,9 +7,17 @@ if SERVER then
     util.AddNetworkString("ttt2_slk_epop_defeat")
     util.AddNetworkString("ttt2_slk_network_wep")
 
+    --resource.AddFile("materials/hud/vignette.vmt")
     resource.AddFile("materials/hud/hvision.vmt")
     resource.AddFile("materials/hud/hvision_dx6.vmt")
+    resource.AddFile("materials/hud/vignette.vmt")
+    resource.AddFile("materials/hud/vignette_dx6.vmt")
+    resource.AddFile("materials/hud/vignette_blue.vmt")
+    resource.AddFile("materials/hud/vignette_blue_dx6.vmt")
+
+
     resource.AddFile("materials/vgui/ttt/hud/hud_icon_slk_cloak")
+    resource.AddFile("materials/vgui/ttt/hud/hud_icon_slk_cloak_fading")
 end
 
 local plymeta = FindMetaTable("Player")
@@ -27,14 +35,19 @@ if CLIENT then
     -- Credits got to: https://github.com/ZacharyHinds/ttt2-role_hidden --
     ----------------------------------------------------------------------
 
+    local blood_mat = Material("hud/hvision.vmt", "noclamp smooth")
+    local vignette_mat = Material("hud/vignette.vmt", "noclamp smooth")
+    local vignette_blue_mat = Material("hud/vignette_blue_dx6.vmt", "noclamp smooth")
+
     local function StalkerHUDOverlay()
         local client = LocalPlayer()
 
-        if client:GetBaseRole() ~= ROLE_HIDDEN then return end
+        if client:GetBaseRole() ~= ROLE_STALKER then return end
 
         if client:GetNWBool("ttt2_slk_stalker_mode", false) then
+            local modifier = math.Clamp(1 - client:GetNWInt("ttt2_slk_cloak_strength") / 100 or 1, 0.1, 1)
             render.UpdateScreenEffectTexture()
-            render.SetMaterial(Material("hud/hvision.vmt", "noclamp smooth"))
+            render.SetMaterial( blood_mat )
             render.DrawScreenQuad()
         end
     end
@@ -43,9 +56,9 @@ if CLIENT then
 
 
     ColorMod = {}
-    ColorMod[ "$pp_colour_addr" ] = 0.09
+    ColorMod[ "$pp_colour_addr" ] = 0.0
     ColorMod[ "$pp_colour_addg" ] = 0.03
-    ColorMod[ "$pp_colour_addb" ] = 0
+    ColorMod[ "$pp_colour_addb" ] = 0.09
     ColorMod[ "$pp_colour_brightness" ] = 0
     ColorMod[ "$pp_colour_contrast" ] = 0.9
     ColorMod[ "$pp_colour_colour" ] = 1
@@ -62,7 +75,7 @@ if CLIENT then
 
         DrawColorModify(ColorMod)
         local modifier = client:GetNWInt("ttt2_slk_cloak_strength") / 100 or 1
-        ColorMod[ "$pp_colour_addr" ] = .09 * modifier
+        ColorMod[ "$pp_colour_addb" ] = .09 * modifier
         ColorMod[ "$pp_colour_addg" ] = .03 * modifier
 	    ColorMod[ "$pp_colour_contrast" ] = 0.9
 	    ColorMod[ "$pp_colour_colour" ] = 1
