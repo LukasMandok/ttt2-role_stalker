@@ -96,12 +96,14 @@ end
 function SWEP:Deploy()
     if SERVER then return true end
     LocalPlayer():SetManaCost(self.Mana)
+    RECHARGE_STATUS:AddStatus("ttt2_slk_scream_recharge")
     return true
 end
 
 function SWEP:Holster()
     if SERVER then return true end
     LocalPlayer():SetManaCost(nil)
+    RECHARGE_STATUS:RemoveStatus("ttt2_slk_scream_recharge")
     return true
 end
 
@@ -134,10 +136,16 @@ function SWEP:Think()
 
 end
 
+function SWEP:SetNextFire(time)
+    self:SetNextPrimaryFire(CurTime() + time)
+    RECHARGE_STATUS:SetRecharge(self:GetOwner(), "ttt2_slk_scream_recharge", time, true)
+end
+
 function SWEP:CanPrimaryAttack()
     if self:Clip1() < 1 then
         self:GetOwner():EmitSound( self.Primary.Miss, 40, 250 )
-        self:SetNextPrimaryFire(CurTime() + 1 ) --self.Primary.Delay
+        --self:SetNextPrimaryFire( CurTime() + 1 ) --
+        --self:SetNextFire(self.)
         return false
     end
 
@@ -153,7 +161,7 @@ function SWEP:PrimaryAttack()
 
     if not self:CanPrimaryAttack() then return end
 
-    self:SetNextPrimaryFire(CurTime() + self.Primary.Delay)
+    self:SetNextFire(self.Primary.Delay)
 
     self:SetClip1(0)
     --owner:SetAmmo(owner:GetAmmoCount(self:GetPrimaryAmmoType()) - 1, self:GetPrimaryAmmoType())

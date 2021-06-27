@@ -2,7 +2,8 @@ if SERVER then
     AddCSLuaFile()
 
     resource.AddFile("materials/vgiu/ttt/icon_slk_lifesteal")
-    resource.AddFile("materials/vgui/ttt/hud/hud_icon_slk_lifesteal.png")
+    --resource.AddFile("materials/vgui/ttt/hud/hud_icon_slk_lifesteal.png")
+    resource.AddFile("materials/vgui/ttt/hud/hud_icon_slk_lifesteal.vmt")
 end
 
 ITEM.EquipMenuData = {
@@ -20,11 +21,12 @@ ITEM.notBuyable = false
 
 if CLIENT then
     ITEM.material = "vgui/ttt/icon_slk_lifesteal"
-    ITEM.hud      = Material("vgui/ttt/hud/hud_icon_slk_lifesteal.png")  --.png
+    --ITEM.hud      = Material("vgui/ttt/hud/hud_icon_slk_lifesteal.png")  --.png
 end
 
-ITEM.RegenTime = 2
+ITEM.RegenTime       = 2
 ITEM.RegenTimeCorpse = 5
+ITEM.Mana            = 10
 
 -- hook.Add("PostInitPostEntity", "Intiaialize_item_ttt_slk_lifesteal", function()
 --     AddToShopFallback(STALKER.fallbackTable, ROLE_STALKER, ITEM)
@@ -59,6 +61,8 @@ if SERVER then
     function ITEM:Bought(owner)
         if owner:GetSubRole() ~= ROLE_STALKER or not owner:Alive() or owner:IsSpec() then return end
 
+        RECHARGE_STATUS:AddStatus(owner, "ttt2_slk_lifesteal_recharge")
+
         hook.Add("ttt_slk_claws_hit", "StalkerClawsLifesteal", function(ply, tgt, dmg, primary)
             if not ply:HasEquipmentItem(self.id) or ply:GetSubRole() ~= ROLE_STALKER or not ply:Alive() or ply:IsSpec() then return end
 
@@ -72,12 +76,18 @@ if SERVER then
 
     -- Sets the time, where the Item can regenerate Health again
     function ITEM:SetNextRegen(ply, time)
-        ply.NextRegen = CurTime() + (time or self.RegenTime)
+        local time = time or self.RegenTime
+        ply.NextRegen = CurTime() + time
+        RECHARGE_STATUS:SetRecharge(ply, "ttt2_slk_lifesteal_recharge", time, true)
     end
 
     -- Tests if the item can regenerate health
     function ITEM:CanRegen(ply)
-        return ply.NextRegen and ply.NextRegen < CurTime() or true
+        if not ply.NextRegen then 
+            return true
+        else 
+            return ply.NextRegen < CurTime() 
+        end
     end
 
     function ITEM:HitPlayer(ply, tgt, dmg)

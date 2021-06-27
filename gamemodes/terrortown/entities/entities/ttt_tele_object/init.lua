@@ -230,7 +230,7 @@ function ENT:DamagePlayer(target, mass, speed, dir, pos, norm)
 
     local dmg = DamageInfo()
 
-    damage = math.Clamp(mass * speed * 0.001 * 2, self.MinDamage, self.MaxDamage)
+    damage = math.Clamp(mass * speed * 0.002 , self.MinDamage, self.MaxDamage)
 
     print("mass = " .. tostring(mass), "speed = " .. tostring(speed))
     print("\t-> damage = ", tostring(math.Round(damage)))

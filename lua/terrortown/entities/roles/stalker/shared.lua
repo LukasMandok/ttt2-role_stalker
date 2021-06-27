@@ -90,6 +90,9 @@ if SERVER then
         ply:RemoveEquipmentItem("item_ttt_climb")
         ply:SetStalkerMode_slk(false)
         STATUS:RemoveStatus(ply, "ttt2_hdn_invisbility")
+        RECHARGE_STATUS:RemoveStatus(ply, "ttt2_slk_lifesteal_recharge")
+        RECHARGE_STATUS:RemoveStatus(ply, "ttt2_slk_tele_recharge")
+        RECHARGE_STATUS:RemoveStatus(ply, "ttt2_slk_scream_recharge")
 
         hook.Remove("PreDrawHalos", "HighlightTeleObjects")
         hook.Remove("CreateMove", "RemoveHighlightObject")

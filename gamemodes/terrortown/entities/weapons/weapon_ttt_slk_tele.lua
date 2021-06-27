@@ -243,6 +243,12 @@ end
 function SWEP:Reload() end
 
 
+function SWEP:SetNextFire(time)
+    self:SetNextSecondaryFire(CurTime() + time)
+    RECHARGE_STATUS:SetRecharge(self:GetOwner(), "ttt2_slk_tele_recharge", time, true)
+end
+
+
 function SWEP:CanSecondaryAttack()
     -- if self:GetOwner():GetMana() < (self.Primary.Mana + self.Secondary.Mana) then
     --     self:SetClip1()
@@ -256,7 +262,7 @@ function SWEP:CanSecondaryAttack()
     if self:Clip1() < 1 then
         --print("not enough ammo:", self:Clip1())
         self:GetOwner():EmitSound( self.Primary.MissSound, 40, 250 )
-        self:SetNextSecondaryFire(CurTime() + self.Primary.Delay)
+        self:SetNextFire( self.Primary.Delay)
         return false
     end
 
@@ -271,7 +277,7 @@ function SWEP:PrimaryAttack()
     self:SetNextPrimaryFire(CurTime() + self.Primary.Delay)
 
     if self:LaunchTele() then
-        self:SetNextSecondaryFire(CurTime() + self.Secondary.Delay)
+        self:SetNextFire(self.Secondary.Delay)
 
         if SERVER then
             owner:SetNWBool("ttt2_slk_tele_active", false)
@@ -287,7 +293,7 @@ function SWEP:SecondaryAttack()
     if not IsValid(owner) or owner:GetSubRole() ~= ROLE_STALKER or not owner:GetNWBool("ttt2_hd_stalker_mode", false) then return end
     if not self:CanSecondaryAttack() then return end
 
-    self:SetNextSecondaryFire(CurTime() + self.Secondary.Delay)
+    self:SetNextFire(self.Secondary.Delay)
 
     -- local tgt, spos, sdest, trace = self:MeleeTrace()
     -- print("target:", tgt, "pos:", spos, "destination:", sdest, "trace:", trace)
@@ -539,7 +545,7 @@ function SWEP:CalculateManaCost(ent, only_shot)
 
     --print("Mass = " .. tostring(mass), "ent:", ent)
 
-    local mana_cost =  math.Clamp(mass / 3, self.Primary.ManaMin, self.Primary.ManaMax)
+    local mana_cost =  math.Clamp(mass * 0.3, self.Primary.ManaMin, self.Primary.ManaMax)
 
     if not only_shot then mana_cost = mana_cost + self.Secondary.Mana end
 
@@ -654,6 +660,8 @@ if CLIENT then
 
         hook.Add("TTTModifyTargetedEntity", "Stalker:ChangeTargetIDTele", changeTargetID)
         hook.Add("TTTRenderEntityInfo", "Stalker:DrawTargetIDTele", drawTargetID)
+
+        RECHARGE_STATUS:AddStatus("ttt2_slk_tele_recharge")
         return true
     end
 
@@ -665,6 +673,8 @@ if CLIENT then
 
         hook.Remove("TTTModifyTargetedEntity", "Stalker:ChangeTargetIDTele")
         hook.Remove("TTTRenderEntityInfo", "Stalker:DrawTargetIDTele")
+
+        RECHARGE_STATUS:RemoveStatus("ttt2_slk_tele_recharge")
         return true
     end
 

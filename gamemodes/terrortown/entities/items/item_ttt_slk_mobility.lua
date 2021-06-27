@@ -3,7 +3,7 @@ if SERVER then
     AddCSLuaFile()
 
     resource.AddFile("materials/vgiu/ttt/icon_slk_mobility")
-    resource.AddFile("materials/vgui/ttt/hud/hud_icon_slk_mobility.png") --.png
+    resource.AddFile("materials/vgui/ttt/hud/hud_icon_slk_mobility") --.png
 end
 
 ITEM.EquipMenuData = {
@@ -21,7 +21,7 @@ ITEM.notBuyable = false
 
 if CLIENT then
     ITEM.material = "vgui/ttt/icon_slk_mobility"
-    ITEM.hud      = Material("vgui/ttt/hud/hud_icon_slk_mobility.png")  --.png
+    ITEM.hud      = Material("vgui/ttt/hud/hud_icon_slk_mobility.vmt")  --.png
 end
 
 ITEM.RegenTime = 2
