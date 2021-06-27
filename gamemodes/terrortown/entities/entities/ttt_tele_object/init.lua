@@ -217,6 +217,18 @@ function ENT:OnRemove()
         if IsValid(phys) then
             phys:EnableGravity(true)
             phys:Wake()
+
+            if par:IsRagdoll() then
+                local phys_i
+                for i = 0, 16 do
+                    phys_i = par:GetPhysicsObjectNum(i)
+
+                    if IsValid(phys_i) then
+                        phys_i:EnableGravity(true)
+                        phys_i:Wake()
+                    end
+                end
+            end
         end
     end
 end

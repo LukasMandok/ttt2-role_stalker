@@ -78,10 +78,10 @@ if CLIENT then
         ColorMod[ "$pp_colour_addb" ] = .09 * modifier
         ColorMod[ "$pp_colour_addg" ] = .03 * modifier
 	    ColorMod[ "$pp_colour_contrast" ] = 0.9
-	    ColorMod[ "$pp_colour_colour" ] = 1
+	    ColorMod[ "$pp_colour_colour" ] = 1 - 0.2 * modifier
         --ColorMod[ "$pp_colour_brightness"] = - 0.3 * (1-modifier)
         if modifier != 1 then
-            ColorMod[ "$pp_colour_addb"] = 0.05 * (1-modifier)
+            ColorMod[ "$pp_colour_addr"] = 0.05 * (1-modifier)
             DrawSharpen( 1 + 0.2 * (1-modifier), 1 + 0.2 * (1-modifier) )
         end
         
