@@ -57,7 +57,7 @@ SWEP.LimitedStock           = true
 SWEP.notBuyable             = false
 
 -- PRIMARY: Tele Shot
-SWEP.Primary.Delay          = 0.2
+SWEP.Primary.Delay          = 1
 SWEP.Primary.Automatic      = false
 SWEP.Primary.ClipSize       = 1 -- 1
 SWEP.Primary.DefaultClip    = 1 -- 1
@@ -293,12 +293,11 @@ function SWEP:SecondaryAttack()
     if not IsValid(owner) or owner:GetSubRole() ~= ROLE_STALKER or not owner:GetNWBool("ttt2_hd_stalker_mode", false) then return end
     if not self:CanSecondaryAttack() then return end
 
-    self:SetNextFire(self.Secondary.Delay)
-
     -- local tgt, spos, sdest, trace = self:MeleeTrace()
     -- print("target:", tgt, "pos:", spos, "destination:", sdest, "trace:", trace)
     -- if IsValid(tgt) then
     if self:StartTele() then
+        self:SetNextFire(self.Secondary.Delay)
         self:SetClip1(0)
         --owner:SetAmmo(owner:GetAmmoCount(self:GetPrimaryAmmoType()) - 1, self:GetPrimaryAmmoType())
         if SERVER then
@@ -306,8 +305,9 @@ function SWEP:SecondaryAttack()
             owner:AddMana(-self.Secondary.Mana)
 
         end
+    else
+        self:SetNextFire(self.Primary.Delay)
     end
-    --owner:LagCompensation(false)
 end
 
 -- Checks wether telekinesis can be used on an object

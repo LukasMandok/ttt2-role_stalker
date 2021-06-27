@@ -36,13 +36,6 @@ function ITEM:Initialize()
     AddToShopFallback(STALKER.fallbackTable, ROLE_STALKER, self)
 
 end
---     if SERVER then
---         AddEquipmentToRole(ROLE_STALKER, self)
-
---     elseif CLIENT then
---         AddEquipmentToRoleEquipment(ROLE_STALKER, self)
---     end
--- end
 
 
 if SERVER then
@@ -60,8 +53,6 @@ if SERVER then
 
     function ITEM:Bought(owner)
         if owner:GetSubRole() ~= ROLE_STALKER or not owner:Alive() or owner:IsSpec() then return end
-
-        RECHARGE_STATUS:AddStatus(owner, "ttt2_slk_lifesteal_recharge")
 
         hook.Add("ttt_slk_claws_hit", "StalkerClawsLifesteal", function(ply, tgt, dmg, primary)
             if not ply:HasEquipmentItem(self.id) or ply:GetSubRole() ~= ROLE_STALKER or not ply:Alive() or ply:IsSpec() then return end

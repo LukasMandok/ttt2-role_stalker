@@ -92,6 +92,11 @@ function SWEP:Deploy()
     timer.Simple(1, function()
         self:SendViewModelAnim( ACT_VM_IDLE , 0 )
     end)
+
+    if CLIENT and self:GetOwner():HasEquipmentItem("item_ttt_slk_lifesteal") then
+        RECHARGE_STATUS:AddStatus("ttt2_slk_lifesteal_recharge")
+    end
+
     return true
 end
 
@@ -101,6 +106,11 @@ function SWEP:Holster()
         --set its weapon to nil, this way the viewmodel won't show up again
         viewmodel1:SetWeaponModel( self.ViewModel , nil )
     end
+
+    if CLIENT then
+        RECHARGE_STATUS:RemoveStatus("ttt2_slk_lifesteal_recharge")
+    end
+
     return true
 end
 
