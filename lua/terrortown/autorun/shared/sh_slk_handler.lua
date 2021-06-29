@@ -7,14 +7,14 @@ if SERVER then
     util.AddNetworkString("ttt2_slk_epop_defeat")
     util.AddNetworkString("ttt2_slk_network_wep")
 
-    --resource.AddFile("materials/hud/vignette.vmt")
     resource.AddFile("materials/hud/hvision.vmt")
-    resource.AddFile("materials/hud/hvision_dx6.vmt")
-    resource.AddFile("materials/hud/vignette.vmt")
-    resource.AddFile("materials/hud/vignette_dx6.vmt")
-    resource.AddFile("materials/hud/vignette_blue.vmt")
-    resource.AddFile("materials/hud/vignette_blue_dx6.vmt")
+    -- resource.AddFile("materials/hud/hvision_dx6.vmt")
 
+    resource.AddFile("materials/hud/water_effect.vmt")
+    resource.AddFile("materials/hud/water_effect_dx6.vmt")
+
+    resource.AddFile("materials/hud/vignette.vmt")
+    resource.AddFile("materials/hud/vignette_blue.vmt")
 
     resource.AddFile("materials/vgui/ttt/hud/hud_icon_slk_cloak")
     resource.AddFile("materials/vgui/ttt/hud/hud_icon_slk_cloak_fading")
@@ -35,9 +35,10 @@ if CLIENT then
     -- Credits got to: https://github.com/ZacharyHinds/ttt2-role_hidden --
     ----------------------------------------------------------------------
 
-    local blood_mat = Material("hud/hvision.vmt", "noclamp smooth")
-    local vignette_mat = Material("hud/vignette.vmt", "noclamp smooth")
-    local vignette_blue_mat = Material("hud/vignette_blue_dx6.vmt", "noclamp smooth")
+    local water_effect = Material("hud/water_effect.vmt", "noclamp smooth")
+    local vignette_mat = Material("hud/vignette.vmt")
+    local vignette_blue_mat = Material("hud/vignette_blue.vmt")
+    local blood_mat = Material("hud/hvision.vmt")
 
     local function StalkerHUDOverlay()
         local client = LocalPlayer()
@@ -45,15 +46,13 @@ if CLIENT then
         if client:GetBaseRole() ~= ROLE_STALKER then return end
 
         if client:GetNWBool("ttt2_slk_stalker_mode", false) then
-            local modifier = math.Clamp(1 - client:GetNWInt("ttt2_slk_cloak_strength") / 100 or 1, 0.1, 1)
             render.UpdateScreenEffectTexture()
-            render.SetMaterial( blood_mat )
+            render.SetMaterial( water_effect )
             render.DrawScreenQuad()
         end
     end
 
     hook.Add("PostDrawOpaqueRenderables", "TTT2Stalker:PlayerVision", StalkerHUDOverlay)
-
 
     ColorMod = {}
     ColorMod[ "$pp_colour_addr" ] = 0.0
@@ -93,6 +92,27 @@ if CLIENT then
         render.SuppressEngineLighting(false)
 
         cam.End3D()
+
+        if not vignette_mat then return end
+
+        local modifier = math.Clamp(client:GetNWInt("ttt2_slk_cloak_strength") / 100 or 1, 0.1, 1)
+        render.UpdateScreenEffectTexture()
+
+        vignette_mat:SetFloat("$alpha", modifier)
+        vignette_mat:SetFloat("$envmap", 0)
+        vignette_mat:SetFloat("$envmaptint", 0)
+        vignette_mat:SetInt("$ignorez", 1)
+        
+        render.SetMaterial( vignette_mat )
+        render.DrawScreenQuad()
+
+        blood_mat:SetFloat("$alpha", 1 - modifier)
+        blood_mat:SetFloat("$envmap", 0)
+        blood_mat:SetFloat("$envmaptint", 0)
+        blood_mat:SetInt("$ignorez", 1)
+
+        render.SetMaterial( blood_mat )
+        render.DrawScreenQuad()
     end
 
     hook.Add("RenderScreenspaceEffects", "TTT2Stalker:VisionRender", DoStalkerVision)

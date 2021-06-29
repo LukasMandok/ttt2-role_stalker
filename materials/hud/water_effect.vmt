@@ -4,13 +4,13 @@
 
 	"Refract_DX60"
 	{
-		"$fallbackmaterial" "hud/vignette_blue"
+		"$fallbackmaterial" "hud/water_effect_dx6"
 	}
 
  	"$refractamount" "0.03"
  	"$bluramount" "0.2"
 	"$REFRACTTINT" "{255 215 215}"
-	"$REFRACTTINTtexture" "hud/vignette_blue"
+	"$REFRACTTINTtexture" "hud/water_effect"
 	"$scale" "[1 1]"
 	"$dudvmap" "dev/water_dudv"
  	"$normalmap" "dev/water_normal"

@@ -72,7 +72,7 @@ if CLIENT then -- CLIENT
 		self:DrawBar(x + pad, y + pad, w - pad * 2, h - pad * 2, col, multiplier, self.scale, text)
 
 		if val then
-			draw.AdvancedText("-" .. tostring(val), "PureSkinBar", x + w - 3 * pad, y + h / 2, util.GetDefaultColor(Color(234, 41, 41)), TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER, false, self.scale)
+			draw.AdvancedText("-" .. tostring(val), "PureSkinBar", x + w - 3 * pad, y + 0.5 * h - 1, util.GetDefaultColor(Color(234, 41, 41)), TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER, true, self.scale)
 		end
 
 		self:DrawLines(x, y, w, h, self.basecolor.a)

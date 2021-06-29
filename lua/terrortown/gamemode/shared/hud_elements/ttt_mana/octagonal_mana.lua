@@ -96,7 +96,7 @@ if CLIENT then
 
 		
 		if mana_cost then
-			draw.AdvancedText("-" .. tostring(mana_cost), "OctagonalBar", x + w - 2 * self.pad, y + h / 2, util.GetDefaultColor(Color(234, 41, 41)), TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER, false, self.scale)
+			draw.AdvancedText("-" .. tostring(mana_cost), "OctagonalBar", x + w - 2 * self.pad, y + 0.5 * h, util.GetDefaultColor(Color(234, 41, 41)), TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER, false, self.scale)
 		end
 	end
 end

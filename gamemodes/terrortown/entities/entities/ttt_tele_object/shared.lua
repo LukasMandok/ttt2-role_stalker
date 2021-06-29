@@ -1,3 +1,7 @@
+------------------------------------------------------------
+-- credits go to: https://github.com/nuke-haus/thestalker -- 
+------------------------------------------------------------
+
 ENT.Type = "anim"
 ENT.Base = "base_anim"
 

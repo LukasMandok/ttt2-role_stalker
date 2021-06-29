@@ -158,6 +158,10 @@ end
 
 
 function SWEP:Scream()
+    ------------------------------------------------------------
+    -- credits go to: https://github.com/nuke-haus/thestalker -- 
+    ------------------------------------------------------------
+
     local owner = self:GetOwner()
 
     owner:EmitSound( self.Primary.Scream, 75, 90 )

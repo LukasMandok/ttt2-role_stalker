@@ -148,6 +148,10 @@ function SWEP:Equip(owner)
 end
 
 function SWEP:PrimaryAttack()
+    ------------------------------------------------------------
+    -- credits go to: https://github.com/nuke-haus/thestalker -- 
+    ------------------------------------------------------------
+
     -- TODO: Only set this, if the attack hit something.    
     self:SetNextPrimaryFire(CurTime() + self.Primary.Delay)
     self:SetNextSecondaryFire(CurTime() + self.Primary.Delay)
@@ -271,6 +275,9 @@ function SWEP:SecondaryAttack()
 
 
 function SWEP:MeleeTrace(hitDistance)
+    ------------------------------------------------------------
+    -- credits go to: https://github.com/nuke-haus/thestalker -- 
+    ------------------------------------------------------------
 
     local owner = self:GetOwner()
 

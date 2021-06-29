@@ -1,3 +1,7 @@
+------------------------------------------------------------
+-- credits go to: https://github.com/nuke-haus/thestalker -- 
+------------------------------------------------------------
+
 include('shared.lua')
 
 ENT.RenderGroup = RENDERGROUP_TRANSLUCENT

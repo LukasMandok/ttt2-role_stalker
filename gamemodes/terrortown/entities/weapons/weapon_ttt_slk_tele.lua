@@ -323,6 +323,10 @@ end
 
 -- Turnes Prop into controlled prop
 function SWEP:CreateTeleProp(ent)
+    ------------------------------------------------------------
+    -- credits go to: https://github.com/nuke-haus/thestalker -- 
+    ------------------------------------------------------------
+
     local owner = self:GetOwner()
     --print("Turn Prop into CreateTeleProp")
     ent.Tele = true
@@ -375,6 +379,10 @@ end
 
 -- Lanches Object, if one is controlled with telekinesis
 function SWEP:LaunchTele()
+    ------------------------------------------------------------
+    -- credits go to: https://github.com/nuke-haus/thestalker -- 
+    ------------------------------------------------------------
+
     if IsValid(self.Psy) then
         local ply_tr = util.GetPlayerTrace(self:GetOwner())
         ply_tr.filter = {self:GetOwner(), self.Psy, self.Psy.Prop}
@@ -392,6 +400,10 @@ end
 
 -- Starks Telekinesis process of an object
 function SWEP:StartTele()
+    ------------------------------------------------------------
+    -- credits go to: https://github.com/nuke-haus/thestalker -- 
+    ------------------------------------------------------------
+
     local owner = self:GetOwner()
     -- create Trace in the direction the player is looking in. 
     -- restrict distance to self.MaxDistance
